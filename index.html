@@ -3,13 +3,17 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Universal Posters</title>
 <meta name="description" content="Universal Posters: design one poster and adapt it to every aspect ratio.">
 <meta name="theme-color" content="#0a3019">
 <meta name="apple-mobile-web-app-title" content="Universal Posters">
 <meta name="application-name" content="Universal Posters">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=3" data-up>
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png?v=3" data-up>
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png?v=3" data-up>
+<link rel="manifest" href="manifest.webmanifest?v=3">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}img{max-width:100%}[hidden]{display:none!important}</style>
 </head>
 <body>
@@ -20,8 +24,11 @@
 <script>
 /* The page may be wrapped in another document skeleton (for example when downloaded from an artifact), which can put
    these links outside <head> or add a different icon. Move ours into <head> and make them the only icons. */
-(function(){var mine=[].slice.call(document.querySelectorAll('link[rel="icon"],link[rel="apple-touch-icon"]')).filter(function(l){return l.href.indexOf('data:image/png')===0;});
-  [].slice.call(document.querySelectorAll('link[rel~="icon"],link[rel="apple-touch-icon"]')).forEach(function(l){if(mine.indexOf(l)<0)l.remove();});
+(function(){var all=[].slice.call(document.querySelectorAll('link[rel~="icon"],link[rel="apple-touch-icon"]'));
+  // Hosted copies list their icon files in <head> (marked data-up); those win. Otherwise the built-in icons are used.
+  var files=all.filter(function(l){return l.hasAttribute('data-up');});
+  var mine=files.length?files:all.filter(function(l){return l.href.indexOf('data:image/png')===0;});
+  all.forEach(function(l){if(mine.indexOf(l)<0)l.remove();});
   mine.forEach(function(l){document.head.appendChild(l);});})();
 </script>
 <meta name="claude:viewport-fit-sides" content="cover">
