@@ -9,7 +9,7 @@ It runs entirely in the browser. There is no server, no build step and no accoun
 ## Features
 
 - **Responsive layouts:** shared positions across all aspect ratios, with per-layout overrides (marked with a yellow dot).
-- **Automate:** finds your assets inside reference posters with sub-pixel accuracy (detail matching plus a pixel-level refinement pass) and builds every layout from them. Layout priority: a reference with the layout's exact shape first, then any other reference, then centring on the focal point.
+- **Auto-Align:** finds your assets inside reference posters with sub-pixel accuracy (detail matching plus a pixel-level refinement pass) and builds every layout from them. Layout priority: a reference with the layout's exact shape first, then any other reference, then centring on the focal point.
 - **Photoshop-style editing:** layers with opacity, visibility and locking; move, scale (proportional or free, from a corner or the centre) and rotate; sticky alignment guides; rule-of-thirds grid; zoom and hand tool; undo and redo.
 - **Drawing layers:** paint with a brush (size, colour, eraser) on a layer whose box hugs the drawing, so it scales and rotates like any asset.
 - **Cut out and Remove Background:** draw loosely around part of an image to keep just that part, or remove the background automatically. Runs entirely in the browser.

@@ -445,7 +445,7 @@ select option{background:var(--panel);color:#c2ccc6}
       </div>
       <section class="pnl" id="layersPnl" aria-label="Layers">
         <div class="pnl-h"><button class="ib chev" data-collapse="layers" aria-label="Collapse layers" title="Collapse"></button><input type="checkbox" id="selAll" aria-label="Select all layers" title="Select all layers"><h3>Layers</h3><span class="count" id="lcount"></span><span class="sp"></span>
-          <button class="btn small ghost" id="btnImport" title="Import images">Import</button><button class="btn small ghost" id="btnText" title="Add a text layer">Text</button><button class="btn small ghost" id="btnDraw" title="Draw on a new layer">Draw</button>
+          <button class="btn small ghost" id="btnImport" title="Import images">Import</button><button class="btn small ghost" id="btnText" title="Add a text layer">Text</button><button class="btn small ghost" id="btnDraw" title="Draw on the selected layer, or on a new layer if none is selected">Draw</button>
         </div>
         <ul id="layers" aria-label="Layer list"></ul>
         <div class="pnl-f">
@@ -750,6 +750,7 @@ const ICONS={
   reset:'<path d="M3 8a5 5 0 1 0 1.6-3.7"/><path d="M3 2.5v3h3"/>',
   link:'<path d="M6.8 9.2a2.8 2.8 0 0 0 4 0l2-2a2.8 2.8 0 0 0-4-4l-.8.8"/><path d="M9.2 6.8a2.8 2.8 0 0 0-4 0l-2 2a2.8 2.8 0 0 0 4 4l.8-.8"/>',
   unlink:'<path d="M9.5 3.6l.3-.3a2.8 2.8 0 0 1 4 4l-1.6 1.6M6.5 12.4l-.3.3a2.8 2.8 0 0 1-4-4l1.6-1.6"/><path d="M2.5 2.5l11 11"/>',
+  removeBg:'<rect x="2" y="2" width="12" height="12" rx="1.5" stroke-dasharray="2 1.6"/><path d="M8 5.2a2 2 0 1 1 0 4 2 2 0 0 1 0-4zM4.6 13.5c.5-2 1.8-3.2 3.4-3.2s2.9 1.2 3.4 3.2"/>',
   scissors:'<circle cx="4.5" cy="11.5" r="2"/><circle cx="11.5" cy="11.5" r="2"/><path d="M5.9 10 12.5 2M10.1 10 3.5 2"/>',
   resetAll:'<path d="M3 8a5 5 0 1 0 1.6-3.7"/><path d="M3 2.5v3h3"/><circle cx="8" cy="8" r="1.3"/>',
 };
@@ -1444,7 +1445,7 @@ function setCategory(L,cat){
 /* Scale to fit: the whole asset (rotation included) just fits inside this layout, kept where it is as far as possible.
    Scale to fill: the asset just covers the whole layout, centred. Proportions are kept in both cases. */
 function scaleToCanvas(L,mode){
-  // an image Automate made the background becomes a normal asset first, kept where it is, so it can be scaled
+  // an image Auto-Align made the background becomes a normal asset first, kept where it is, so it can be scaled
   if(isBg(L))roleChange(L,'background');
   edit(()=>{
     const W=curFrame.w,H=curFrame.h,pl={...E.effective(P,L,P.activeRatio)};
@@ -1676,6 +1677,7 @@ function menuDefs(){
     Edit:[
       {label:'Undo',sc:MOD+'Z',dis:!HIST.undo.length,act:undo},
       {label:'Redo',sc:MOD+'Shift+Z',dis:!HIST.redo.length,act:redo},
+      {label:'Reset Layer in This Layout',dis:!has,act:resetLayerOverride},
       {sep:1},
       {label:'Copy',sc:MOD+'C',dis:!has,act:copySelected},
       {label:'Paste',sc:MOD+'V',act:editPaste},
@@ -1691,16 +1693,14 @@ function menuDefs(){
       {label:'Left Edges',dis:!has,act:()=>align('left')},{label:'Horizontal Centres',dis:!has,act:()=>align('center')},{label:'Right Edges',dis:!has,act:()=>align('right')},
       {label:'Top Edges',dis:!has,act:()=>align('top')},{label:'Vertical Centres',dis:!has,act:()=>align('middle')},{label:'Bottom Edges',dis:!has,act:()=>align('bottom')},
       {label:'Distribute Horizontally',dis:!has,act:()=>align('distH')},{label:'Distribute Vertically',dis:!has,act:()=>align('distV')},
-      {label:'Align to Reference',sc:MOD+'Shift+L',act:()=>alignToSimilar(sel)},
       {sep:1},
       {label:'Duplicate',sc:MOD+'D',dis:!has,act:duplicateSelected},
       {label:'Delete',sc:'Del',dis:!has,act:deleteSelected},
-      {label:'Reset Layer in This Layout',dis:!has,act:resetLayerOverride},
       {sep:1},
       {label:'Cut Out…',dis:!cutTarget(),act:startCut},
       {label:'Remove Background',dis:!cutTarget(),act:autoCutout},
       {sep:1},
-      {label:'Automate',sc:MOD+'Shift+A',act:()=>alignToSimilar(sel)},
+      {label:'Auto-Align',sc:MOD+'Shift+A',act:()=>alignToSimilar(sel)},
     ],
     View:[
       {label:'Toggle Composition Grid',sc:"'",check:P.settings.grid,act:toggleGrid},
@@ -1767,8 +1767,8 @@ function renderOptbar(){
   const has=sel.size>0,rk=P.activeRatio,r=ratioBy(rk);
   const ib=(ic,title,fn,dis,pressed)=>el('button',{class:'ib',title,'aria-label':title,disabled:!!dis,'aria-pressed':pressed==null?null:String(!!pressed),html:icon(ic),onclick:fn});
   o.append(
+    el('div',{class:'grp'},ib('undo',`Undo (${MOD}Z)`,undo,!HIST.undo.length),ib('redo',`Redo (${MOD}Shift+Z)`,redo,!HIST.redo.length)),
     ib('reset','Reset selected layers to the shared layout in this layout',resetLayerOverride,!has||![...sel].some(id=>E.hasOverride(P,id,rk))),
-    ib('resetAll','Reset this whole layout to the shared layout',()=>resetLayout(),!ovCount(rk)),
     el('span',{class:'vsep'}),
     el('div',{class:'grp'},ib('alignBoth','Align vertical and horizontal centres',()=>align('both'),!has),ib('alignL','Align left',()=>align('left'),!has),ib('alignC','Align horizontal centres',()=>align('center'),!has),ib('alignR','Align right',()=>align('right'),!has),
       ib('alignT','Align top',()=>align('top'),!has),ib('alignM','Align vertical centres',()=>align('middle'),!has),ib('alignB','Align bottom',()=>align('bottom'),!has),
@@ -1780,10 +1780,9 @@ function renderOptbar(){
     el('span',{class:'vsep'}),
     el('div',{class:'grp'},ib('grid','Composition grid (rule of thirds)',toggleGrid,false,P.settings.grid),ib('magnet','Sticky guides: snap to the grid while dragging',toggleSnap,false,UI.snap!==false),ib('previews','Preview all layouts',()=>setPreviewMode(!previewMode),false,previewMode)),
     el('span',{class:'vsep'}),
-    el('div',{class:'grp'},ib('undo',`Undo (${MOD}Z)`,undo,!HIST.undo.length),ib('redo',`Redo (${MOD}Shift+Z)`,redo,!HIST.redo.length)),
-    el('span',{class:'vsep'}),
     el('button',{class:'btn cutbtn','aria-pressed':String(!!cut),title:'Cut out: draw loosely around part of an image to keep just that part',onclick:startCut,html:icon('scissors')+'<span>Cut out</span>'}),
-    el('button',{class:'btn primary',title:'Automate: line the selected layers (or all of them) up with matching images below them, in every aspect ratio',onclick:()=>alignToSimilar(sel),html:icon('wand')+'<span>Automate</span>'}),
+    el('button',{class:'btn','aria-label':'Remove background',title:'Remove background: keep the main subject of the selected image and remove the rest',onclick:autoCutout,html:icon('removeBg')+'<span>Remove background</span>'}),
+    el('button',{class:'btn primary',title:'Auto-Align: line the selected layers (or all of them) up with matching images below them, in every aspect ratio',onclick:()=>alignToSimilar(sel),html:icon('wand')+'<span>Auto-Align</span>'}),
     el('button',{class:'ib bar-end',title:'Hide the toolbar','aria-label':'Hide the toolbar',onclick:()=>setUI({notools:true}),html:CHEV}));
 }
 function ratioGlyph(r){const A=r.w/r.h,m=14;let w=m,h=m/A;if(h>m){h=m;w=m*A;}return el('span',{class:'glyph'},el('i',{style:`width:${Math.max(2,w)}px;height:${Math.max(2,h)}px`}));}
@@ -1915,11 +1914,11 @@ function renderProps(){
     else if(L.type==='draw'){if(!pen)body.append(brushPanel(L));}
     else body.append(el('div',{class:'prow'},el('span',{class:'k',text:'Image'}),el('span',{class:'v',text:`${A.w} × ${A.h} PNG`})));
     if(L.type!=='text'&&isRef(L)){
-      body.append(el('p',{class:'hint'},'Automate found your other images inside this one, so it’s used as a reference poster: shown faded and never exported. ',
+      body.append(el('p',{class:'hint'},'Auto-Align found your other images inside this one, so it’s used as a reference poster: shown faded and never exported. ',
         el('button',{class:'linkbtn',type:'button',text:'Use as a normal image',onclick:()=>roleChange(L,'reference')})));
     }
     if(isRef(L))body.append(el('div',{class:'prow'},el('span',{class:'k',text:'Ratio'}),el('span',{class:'v',text:(()=>{const [a,b]=reduceRatio(A.w,A.h);return a<=400?`${a}:${b}`:`${fmt(A.w/A.h,3)}:1`;})()})));
-    if(L.locked){body.append(el('p',{class:'hint',text:'Locked: it can’t be moved, scaled or rotated until you unlock it. Automate leaves it alone too.'}));return;}
+    if(L.locked){body.append(el('p',{class:'hint',text:'Locked: it can’t be moved, scaled or rotated until you unlock it. Auto-Align leaves it alone too.'}));return;}
     const pl=E.effective(P,L,rk),ov=E.hasOverride(P,L.id,rk),b=boxOf(L,pl);
     if(L.linked===false)body.append(el('p',{class:'hint',text:`Unlinked: edits only change ${r.name}. Turn the link on in the Layers panel to edit every layout together.`}));
     const apply=fn=>{edit(()=>{const p={...E.effective(P,L,rk)};fn(p);writePl(L.id,p);});notifyDropped();};
@@ -2023,7 +2022,7 @@ $('#docname').addEventListener('change',e=>{const v=e.target.value.trim()||'Unti
 $('#docname').addEventListener('keydown',e=>{if(e.key==='Enter')e.target.blur();e.stopPropagation();});
 $('#selAll').onchange=()=>{const all=P.layers.length&&P.layers.every(L=>sel.has(L.id));sel=all?new Set():new Set(P.layers.map(L=>L.id));refreshSelection();};
 $('#btnImport').title=`Import images (${MOD}I)`;
-$('#btnImport').onclick=()=>importAssetsFlow();$('#btnText').onclick=()=>{if(pen)endDraw();addTextLayer();};$('#btnDraw').onclick=()=>pen?endDraw():startDraw(null);
+$('#btnImport').onclick=()=>importAssetsFlow();$('#btnText').onclick=()=>{if(pen)endDraw();addTextLayer();};$('#btnDraw').onclick=()=>{if(pen)return endDraw();const one=sel.size===1?layerBy([...sel][0]):null;startDraw(one&&!one.locked&&!isRef(one)?one:null);};
 $('#lFront').innerHTML=icon('front');$('#lFwd').innerHTML=icon('forward');$('#lBack').innerHTML=icon('backward');$('#lBottom').innerHTML=icon('back');$('#lDup').innerHTML=icon('dup');$('#lDel').innerHTML=icon('trash');
 $('#lFront').onclick=()=>arrange('front');$('#lFwd').onclick=()=>arrange('forward');$('#lBack').onclick=()=>arrange('backward');$('#lBottom').onclick=()=>arrange('back');$('#lDup').onclick=duplicateSelected;$('#lDel').onclick=deleteSelected;
 function toggleSnap(){setUI({snap:UI.snap===false});toast(UI.snap?'Sticky guides on':'Sticky guides off');}
@@ -2409,82 +2408,104 @@ const pixelText=err=>isFinite(err)?`pixel match ${Math.max(0,100-err/2.55).toFix
 const foundText=f=>`${f.method==='detail'?`found by detail matching (${f.inliers} points)`:'found by shape search'}${f.rot?`, rotated ${f.rot}°`:''} · ${pixelText(f.err)}`;
 
 /* Edit › Align to Reference: snap the selected layers onto where they appear in the reference shown on the canvas. */
-/* Automate / Edit › Align to Reference: each selected layer (or every image when nothing is selected) looks for
-   itself inside the images below it in the Layers panel (nearest first, then the ones above if nothing below
-   matches), and is moved, scaled and turned to sit exactly over where it appears there, in every aspect ratio
+/* Auto-Align / Edit › Align to Reference: each selected layer (or every image when nothing is selected) looks for
+   itself inside the images below it in the Layers panel (nearest first; never the ones above it), and is moved, scaled and turned to sit exactly over where it appears there, in every aspect ratio
    (or only this one, for an unlinked layer). */
 async function alignToSimilar(only){
   if(textEdit)finishTextEdit();if(pen)endDraw();if(cut)endCut(true);
   const ok=L=>L&&isImg(L)&&!isStarter(L)&&!L.locked;
   let Ls=only&&only.size?[...only].map(layerBy).filter(ok):[];
   if(!Ls.length)Ls=P.layers.filter(ok);
-  if(Ls.length<1||P.layers.filter(L=>isImg(L)&&!isStarter(L)).length<2)return toast('Import the artwork and the finished poster (or any image that contains it) first. Automate lines each layer up with a matching image below it.','error');
+  if(Ls.length<1||P.layers.filter(L=>isImg(L)&&!isStarter(L)).length<2)return toast('Import the artwork and the finished poster (or any image that contains it) first. Auto-Align lines each layer up with a matching image below it.','error');
   const area=L=>assetOf(L).w*assetOf(L).h,found=[],missed=[],closest=new Map();
-  busyStart('Automate','Looking for matching images…');
+  busyStart('Auto-Align','Looking for matching images…');
   try{
     for(const [n,L] of Ls.entries()){
-      const i=P.layers.indexOf(L),cand=x=>x!==L&&isImg(x)&&!isStarter(x)&&!Ls.includes(x)||(x!==L&&isImg(x)&&!isStarter(x)&&area(x)>area(L)*1.2);
-      const below=P.layers.slice(0,i).filter(cand).reverse().slice(0,4),above=P.layers.slice(i+1).filter(cand).slice(0,2);
+      const i=P.layers.indexOf(L),cand=x=>x!==L&&isImg(x)&&!isStarter(x);   // any image below, selected or not
+      const below=P.layers.slice(0,i).filter(cand).reverse().slice(0,4),above=[];   // a layer is only ever aligned to layers below it
       let best=null;
+      const better=(m,C)=>{if(m&&(!best||m.err<best.m.err))best={C,m};};
       for(const C of [...below,...above]){
+        if(area(C)<area(L)*.25)continue;   // far smaller than the artwork: can't be the image it's in
         busyUpdate(null,`${n+1} of ${Ls.length} · ${L.name} in ${C.name}`);await sleep(0);
         const CA=assetOf(C);let m=null;try{m=await locateAsset(getImg(CA.id),CA,L);}catch(e){console.warn(e);}
-        if(m&&(!best||m.err<best.m.err))best={C,m};
-        if(m&&m.quality==='good')break;
+        // plenty of matching details means it's the right spot even if part of it is cut off or covered
+        if(m&&(m.quality==='good'||(m.method==='detail'&&m.inliers>=10))){best={C,m,sure:true};break;}
+        better(m,C);
       }
-      // nothing convincing: still find the closest spot in the nearest image, in case you want it anyway
-      if(!best&&below.concat(above).length){const C=below[0]||above[0],CA=assetOf(C),A=assetOf(L);
-        try{let t=await matchTemplate(getImg(CA.id),CA.w,CA.h,getImg(A.id),A.w/A.h);if(t){t.method='shape';t.rot=0;t=await refineMatch(getImg(CA.id),CA,getImg(A.id),A,t);best={C,m:t,forced:true};}}catch(e){console.warn(e);}}
-      if(best&&!best.forced&&best.m.err<=24)found.push({L,...best});else{missed.push(L);if(best)closest.set(L,best);}
+      // not sure yet: also look for the best partial match (cut off by an edge or partly covered)
+      if(!best||!best.sure)for(const C of [...below,...above]){
+        if(area(C)<area(L)*.25)continue;
+        busyUpdate(null,`${n+1} of ${Ls.length} · partial match for ${L.name} in ${C.name}`);await sleep(0);
+        let m=null;try{m=partialMatch(getImg(assetOf(C).id),getImg(assetOf(L).id));}catch(e){console.warn(e);}
+        better(m,C);if(m&&m.err<=12)break;
+      }
+      if(best)found.push({L,...best,loose:!best.sure&&best.m.err>24});else missed.push(L);
     }
     // a photo used as a background is usually cropped in the finished poster: match it as a crop instead
-    for(const L of [...missed]){const A=assetOf(L);if(!(A.stats&&A.stats.opaque>.97))continue;
-      const hosts=[...new Set(found.map(f=>f.C))].concat(P.layers.filter(x=>x!==L&&isImg(x)&&!isStarter(x)&&!found.some(f=>f.C===x))).slice(0,3);
+    for(const L of [...missed,...found.filter(f=>f.loose||f.m.err>6).map(f=>f.L)]){const A=assetOf(L);if(!(A.stats&&A.stats.opaque>.97))continue;
+      const lo=P.layers.slice(0,P.layers.indexOf(L)),hosts=[...new Set(found.map(f=>f.C))].filter(C=>lo.includes(C)).concat(lo.filter(x=>isImg(x)&&!isStarter(x)&&!found.some(f=>f.C===x)).reverse()).slice(0,3);
       for(const C of hosts){if(C===L)continue;const CA=assetOf(C),RA=CA.w/CA.h,boxes=found.filter(f=>f.C===C).map(f=>f.m);
         busyUpdate(null,`${L.name} as a background crop of ${C.name}`);await sleep(0);
         let fit=null;try{fit=fitBackground(getImg(A.id),A,getImg(CA.id),RA,boxes);if(fit)fit={...fit,...await refineBg(getImg(A.id),A,getImg(CA.id),CA,fit,boxes)};}catch(e){console.warn(e);}
-        if(fit&&fit.conf>=.3){const k=Math.max(CA.w/A.w,CA.h/A.h)*Math.max(1,fit.zoom||1),w=A.w*k,h=A.h*k;
-          found.push({L,C,m:{x:(CA.w-w)*fit.ax/CA.w,y:(CA.h-h)*fit.ay/CA.h,w:w/CA.w,h:h/CA.h,rot:0,err:fit.err!=null?fit.err:20}});missed.splice(missed.indexOf(L),1);break;}}
+        const prev=found.find(f=>f.L===L);if(fit&&fit.conf>=.3&&(!prev||(fit.err!=null?fit.err:20)<prev.m.err)){const k=Math.max(CA.w/A.w,CA.h/A.h)*Math.max(1,fit.zoom||1),w=A.w*k,h=A.h*k;
+          const j=found.findIndex(f=>f.L===L);if(j>=0)found.splice(j,1);if(missed.includes(L))missed.splice(missed.indexOf(L),1);
+          found.push({L,C,m:{x:(CA.w-w)*fit.ax/CA.w,y:(CA.h-h)*fit.ay/CA.h,w:w/CA.w,h:h/CA.h,rot:0,err:fit.err!=null?fit.err:20}});break;}}
     }
-    // an image that others were found in is the one to match, so it isn't moved itself (the busiest one wins)
-    for(;;){const kids=new Map();for(const f of found)kids.set(f.C,(kids.get(f.C)||0)+1);
-      const host=[...kids.keys()].filter(C=>found.some(f=>f.L===C)).sort((a,b)=>kids.get(b)-kids.get(a))[0];if(!host)break;
-      found.splice(found.findIndex(f=>f.L===host),1);}
+    // layers only ever match images below them, so a chain works: each lower layer is placed first and the
+    // layers above follow it to its new spot
+    found.sort((a,b)=>P.layers.indexOf(a.L)-P.layers.indexOf(b.L));
     for(const f of found){const j=missed.indexOf(f.C);if(j>=0)missed.splice(j,1);}
   }finally{levelCache.clear();busyEnd();}
   // anything that couldn't be aligned: ask what to do with each one
-  let picks={};
-  if(missed.length){picks=await alignProblems(missed,closest,found.length);if(!picks)return toast('Automate cancelled. Nothing was changed.');}
-  const centred=[],kept=[],forced=[];
-  edit(()=>{for(const f of found)placeOnMatch(f.L,f.C,f.m);
-    for(const L of missed){const v=picks[L.id];
-      if(v==='best'&&closest.has(L)){const c=closest.get(L);placeOnMatch(L,c.C,c.m);forced.push(L.name);}
-      else if(v==='centre'){centreFit(L);centred.push(L.name);}
-      else kept.push(L.name);}});
-  const parts=found.map(f=>`${f.L.name} → ${f.C.name} (${pixelText(f.m.err)})`);
-  const msg=[parts.length?`Aligned ${parts.join(', ')}`:'',forced.length?`Closest match used for ${forced.join(', ')}`:'',centred.length?`Centred and scaled ${centred.join(', ')}`:'',kept.length?`Left ${kept.join(', ')} as ${kept.length>1?'they were':'it was'}`:''].filter(Boolean).join('. ');
-  toast(msg||'Nothing was changed',found.length||forced.length||centred.length?'ok':undefined);
+  // no questions: every layer goes to its best match; only layers with no match at all stay where they are
+  if(!found.length)return toast(`Couldn’t align ${missed.map(L=>L.name).join(', ')}: no matching image found. Put the finished poster (or the image to match) below the layers to align in the Layers panel.`,'error');
+  edit(()=>{for(const f of found)placeOnMatch(f.L,f.C,f.m);});
+  const parts=found.map(f=>`${f.L.name} → ${f.C.name} (${f.loose?'closest match, ':''}${pixelText(f.m.err)})`);
+  toast(`Aligned ${parts.join(', ')}${missed.length?`. Couldn’t align ${missed.map(L=>L.name).join(', ')}: no matching image below ${missed.length>1?'them':'it'}`:''}`,missed.length?'error':'ok');
 }
-function alignProblems(missed,closest,nFound){
-  return new Promise(res=>{const picks={};
-    const body=[el('p',{text:`${nFound?`${nFound} layer${nFound>1?'s were':' was'} aligned. `:''}${missed.length>1?`${missed.length} layers`:'One layer'} couldn’t be matched reliably to another image. Choose what to do with ${missed.length>1?'each':'it'}:`})];
-    for(const L of missed){const c=closest.get(L),opts=[];
-      if(c)opts.push(['best',`Try to align as best as possible (closest: ${c.C.name}, ${pixelText(c.m.err)})`]);
-      opts.push(['centre','Position and scale it to the centre'],['keep','Leave as is']);
-      const s2=el('select',{'aria-label':`What to do with ${L.name}`},...opts.map(([v,t])=>el('option',{value:v,text:t})));s2.value=c&&c.m.err<=32?'best':'centre';picks[L.id]=s2;
-      body.push(el('div',{class:'problem'},el('div',{class:'pt'},el('b',{text:L.name}),el('span',{text:c?'Only a loose match was found. The artwork may differ from the image it’s in, or be partly covered.':'Not found in any other image. Put the finished poster (or the image to match) below it in the Layers panel.'})),s2));}
-    body.push(el('p',{class:'hint',text:'Tip: importing the exact artwork used in the finished poster gives the best match.'}));
-    modal({title:'Some layers couldn’t be aligned',body,onClose:()=>res(null),
-      actions:[{label:'Cancel',onClick:c=>{c();res(null);}},{label:'Apply',kind:'primary',onClick:c=>{const o={};for(const id in picks)o[id]=picks[id].value;c();res(o);}}]});
-  });
-}
-// Centre an image on the poster, scaled to fit, in every aspect ratio (or just this one when unlinked)
-function centreFit(L){
-  if(isBg(L))L.category='other';
-  const q={...E.effective(P,L,P.activeRatio),ax:.5,ay:.5,fit:'fit',rot:0};delete q.cell;delete q.free;delete q.dx;delete q.dy;
-  const o=P.layouts.overrides;
-  if(L.linked===false){(o[P.activeRatio]||(o[P.activeRatio]={}))[L.id]=q;return;}
-  P.layouts.shared[L.id]=q;for(const k in o)if(o[k][L.id])delete o[k][L.id];
+/* Partial match: finds where an image sits inside another even when only part of it shows (cut off by the edge,
+   or partly covered). Sample points from the artwork are compared with the other image at every size and
+   position, ignoring points that fall outside it and the worst-matching points (covered parts). */
+function partialMatch(CImg,AImg){
+  const AW=AImg.naturalWidth||AImg.width,AH=AImg.naturalHeight||AImg.height,ar=AW/AH;
+  const ap=imgPixels(AImg,220),pts=[];
+  {const {w,h,d}=ap,cand=[];for(let y=1;y<h-1;y++)for(let x=1;x<w-1;x++){const i=(y*w+x)*4;if(d[i+3]<220)continue;
+      const g=Math.abs(d[i+4]-d[i-4])+Math.abs(d[i+w*4]-d[i-w*4])+Math.abs(d[i+5]-d[i-3])+Math.abs(d[i+w*4+1]-d[i-w*4+1]);cand.push([g,(x+.5)/w,(y+.5)/h,d[i],d[i+1],d[i+2]]);}
+    if(cand.length<12)return null;cand.sort((a,b)=>b[0]-a[0]);
+    const strong=cand.slice(0,Math.min(260,Math.floor(cand.length*.25))),st=Math.max(1,Math.floor(cand.length/140));
+    for(const c of strong)pts.push(c);for(let i=0;i<cand.length;i+=st)pts.push(cand[i]);}
+  const N=pts.length,diffs=new Float32Array(N);
+  const score=(C,x,y,w,h,bil,minIn)=>{let n=0;const W=C.w,H=C.h,d=C.d;
+    for(let i=0;i<N;i++){const p=pts[i],px=x+p[1]*w,py=y+p[2]*h;if(px<0||py<0||px>W-1||py>H-1)continue;
+      let r,g,b;if(bil){const x0=Math.floor(px),y0=Math.floor(py),tx=px-x0,ty=py-y0,x1=Math.min(W-1,x0+1),y1=Math.min(H-1,y0+1),
+          i00=(y0*W+x0)*4,i10=(y0*W+x1)*4,i01=(y1*W+x0)*4,i11=(y1*W+x1)*4,f=(a,b2,c,e)=>(a*(1-tx)+b2*tx)*(1-ty)+(c*(1-tx)+e*tx)*ty;
+          r=f(d[i00],d[i10],d[i01],d[i11]);g=f(d[i00+1],d[i10+1],d[i01+1],d[i11+1]);b=f(d[i00+2],d[i10+2],d[i01+2],d[i11+2]);}
+      else{const k=((py|0)*W+(px|0))*4;r=d[k];g=d[k+1];b=d[k+2];}
+      diffs[n++]=(Math.abs(r-p[3])+Math.abs(g-p[4])+Math.abs(b-p[5]))/3;}
+    if(n<N*minIn)return Infinity;
+    const v=Array.from(diffs.subarray(0,n)).sort((a,b)=>a-b),keep=Math.max(4,Math.floor(n*.7));let s=0;for(let i=0;i<keep;i++)s+=v[i];
+    return s/keep+(1-n/N)*12;};   // a little preference for showing more of the artwork
+  // coarse search over size and position, artwork allowed to hang past the edges
+  const C0=imgPixels(CImg,110),tops=[];
+  for(let w=C0.w*.05;w<=C0.w*1.25;w*=1.08){const h=w/ar;if(h>C0.h*1.4||h<3)continue;
+    const sx=Math.max(1,w/14),sy=Math.max(1,h/14);
+    for(let y=-.55*h;y<=C0.h-.45*h;y+=sy)for(let x=-.55*w;x<=C0.w-.45*w;x+=sx){const s=score(C0,x,y,w,h,false,.45);
+      if(s<Infinity){tops.push([s,x/C0.w,y/C0.h,w/C0.w]);}}}
+  if(!tops.length)return null;
+  tops.sort((a,b)=>a[0]-b[0]);const seeds=[];for(const t of tops){if(seeds.every(s=>Math.hypot(s[1]-t[1],s[2]-t[2])>.04||Math.abs(Math.log(s[3]/t[3]))>.15))seeds.push(t);if(seeds.length>=6)break;}
+  // refine the best few at a higher resolution
+  let best=null;
+  for(const lv of [300,700,1400]){const C=imgPixels(CImg,lv),cand=best?[best]:seeds.map(s=>({x:s[1],y:s[2],w:s[3]}));const out=[];
+    for(let q of cand){let st=[2/C.w,2/C.h,.03],cur=score(C,q.x*C.w,q.y*C.h,q.w*C.w,q.w*C.w/ar,true,.4);
+      for(let it=0;it<60&&st[0]*C.w>.15;it++){let moved=false;
+        for(const [dx,dy,dz] of [[1,0,0],[-1,0,0],[0,1,0],[0,-1,0],[0,0,1],[0,0,-1]]){const t={x:q.x+dx*st[0],y:q.y+dy*st[1],w:q.w*Math.exp(dz*st[2])};
+          const s=score(C,t.x*C.w,t.y*C.h,t.w*C.w,t.w*C.w/ar,true,.4);if(s<cur){cur=s;q=t;moved=true;}}
+        if(!moved){st=[st[0]/2,st[1]/2,st[2]/2];}}
+      out.push({...q,err:cur});}
+    out.sort((a,b)=>a.err-b.err);best=out[0];}
+  const CW=CImg.naturalWidth||CImg.width,CH=CImg.naturalHeight||CImg.height;
+  return {x:best.x,y:best.y,w:best.w,h:best.w*CW/ar/CH,rot:0,err:best.err,method:'partial'};
 }
 // m: where L appears in C's image (fractions of C's image, plus extra turn). Sets L to that spot in each layout.
 function placeOnMatch(L,C,m){
@@ -2504,7 +2525,7 @@ function placeOnMatch(L,C,m){
 async function alignToReference_old(){
   const Ls=[...sel].map(layerBy).filter(L=>L&&!isRef(L)&&L.visible&&!L.locked);
   if(!Ls.length)return toast('Select a logo, asset or background to align');
-  const refs=P.layers.filter(isRef);if(!refs.length)return toast('No reference poster yet. Run Automate to find one among your images','error');
+  const refs=P.layers.filter(isRef);if(!refs.length)return toast('No reference poster yet. Run Auto-Align to find one among your images','error');
   const A=aspectOf(P.activeRatio),vis=refs.filter(R=>R.visible),pool=vis.length?vis:refs;
   const R=pool.slice().sort((a,b)=>Math.abs(Math.log(assetOf(a).w/assetOf(a).h/A))-Math.abs(Math.log(assetOf(b).w/assetOf(b).h/A)))[0];
   const RA=assetOf(R),rimg=getImg(RA.id);
@@ -2693,7 +2714,7 @@ async function runAutomate(opt,progress){
   // 1. Background recognition
   if(opt.classify){
     rep.push(['h','Asset recognition']);
-    if(only&&nonRef.some(L=>!L.locked&&!only.has(L.id)))rep.push(['',`Automating only the selected layer${only.size>1?'s':''}: ${P.layers.filter(L=>only.has(L.id)&&!isRef(L)).map(L=>`<b>${esc(L.name)}</b>`).join(', ')}`]);
+    if(only&&nonRef.some(L=>!L.locked&&!only.has(L.id)))rep.push(['',`Auto-aligning only the selected layer${only.size>1?'s':''}: ${P.layers.filter(L=>only.has(L.id)&&!isRef(L)).map(L=>`<b>${esc(L.name)}</b>`).join(', ')}`]);
     const userBg=nonRef.find(L=>isBg(L)&&!isStarter(L)&&(!L.catAuto||!inScope(L)));   // the plain starter background doesn't count
     if(userBg)rep.push(['',`<b>${esc(userBg.name)}</b> is the background (set by you)`]);
     else{const cands=nonRef.filter(L=>inScope(L)&&isImg(L)),maxA=Math.max(...cands.map(L=>assetOf(L).w*assetOf(L).h));
@@ -2732,7 +2753,7 @@ async function runAutomate(opt,progress){
   }
   const choice={};for(const pr of problems)choice[pr.L.id]='place';
   if(problems.length&&opt.onMissing){frac(.66,'Waiting for your choice');const r=await opt.onMissing(problems);
-    if(!r)throw Object.assign(new Error('Automate was cancelled'),{cancelled:true});Object.assign(choice,r);}
+    if(!r)throw Object.assign(new Error('Auto-Align was cancelled'),{cancelled:true});Object.assign(choice,r);}
   if(problems.length){rep.push(['h','Alignment problems']);for(const pr of problems)rep.push(['',`<b>${esc(pr.L.name)}</b>: ${CHOICE_TEXT[choice[pr.L.id]]}`]);}
   const usable=(d,id)=>d.found[id]&&(d.found[id].quality==='good'||choice[id]==='best');
   const bgUsable=d=>d.bg&&(d.bg.quality==='good'||choice[bgL.id]==='best');
@@ -2798,22 +2819,22 @@ const a2=L=>{const s=assetOf(L).stats;return s.opaque>.97?'opaque, largest image
 const selectedAssets=()=>new Set([...sel].filter(id=>{const L=layerBy(id);return L&&!isRef(L);}));
 function automateDialog(){
   const nonRef=P.layers.filter(L=>!isRef(L)),refs=P.layers.filter(isRef),only=selectedAssets();
-  if(!nonRef.length&&!refs.length)return toast('Import some images first. Automate arranges them for you.','error');
+  if(!nonRef.length&&!refs.length)return toast('Import some images first. Auto-Align arranges them for you.','error');
   const manual=P.ratios.filter(r=>P.layouts.meta[r.key]&&P.layouts.meta[r.key].manual);
   const cls=el('input',{type:'checkbox',checked:true}),pres=el('input',{type:'checkbox',checked:manual.length>0});
   const body=[
-    el('p',{text:'Automate identifies your background, logo and supporting assets, studies your reference posters, then builds an editable layout for every aspect ratio. Original images are never changed, and one Undo reverses the whole run.'}),
+    el('p',{text:'Auto-Align identifies your background, logo and supporting assets, studies your reference posters, then builds an editable layout for every aspect ratio. Original images are never changed, and one Undo reverses the whole run.'}),
     el('div',{class:'report'},el('div',{html:`<b>${nonRef.length}</b> poster asset${nonRef.length>1?'s':''} · <b>${refs.length}</b> reference poster${refs.length===1?'':'s'} · <b>${P.ratios.length}</b> layouts`}),
-      only.size?el('div',{html:`Only the <b>${only.size} selected layer${only.size>1?'s':''}</b> will be automated: ${nonRef.filter(L=>only.has(L.id)).map(L=>esc(L.name)).join(', ')}. Deselect everything to automate all layers.`}):null,
+      only.size?el('div',{html:`Only the <b>${only.size} selected layer${only.size>1?'s':''}</b> will be auto-aligned: ${nonRef.filter(L=>only.has(L.id)).map(L=>esc(L.name)).join(', ')}. Deselect everything to automate all layers.`}):null,
       refs.length?null:el('div',{text:'No reference posters, so your current arrangement is used as the starting composition.'})),
     el('label',{class:'chk'},cls,'Identify categories for layers I haven’t set myself'),
     el('label',{class:'chk'},pres,manual.length?`Keep layouts I adjusted by hand (${manual.map(r=>r.name).join(', ')})`:'Keep layouts I adjust by hand'),
   ];
-  modal({title:'Automate layouts',body,actions:[{label:'Cancel',onClick:c=>c()},{label:'Run Automate',kind:'primary',onClick:c=>{c();startAutomate({classify:cls.checked,preserve:pres.checked,only});}}]});
+  modal({title:'Auto-Align layouts',body,actions:[{label:'Cancel',onClick:c=>c()},{label:'Run Auto-Align',kind:'primary',onClick:c=>{c();startAutomate({classify:cls.checked,preserve:pres.checked,only});}}]});
 }
-/* Runs Automate with a progress window. If assets can't be aligned, it pauses and asks before guessing. */
+/* Runs Auto-Align with a progress window. If assets can't be aligned, it pauses and asks before guessing. */
 async function startAutomate(opt){
-  const m=modal({title:'Automate layouts',body:[],actions:[],dismissable:false});
+  const m=modal({title:'Auto-Align layouts',body:[],actions:[],dismissable:false});
   const bar=el('i'),txt=el('p',{text:'Starting…'});m.body.append(el('div',{class:'prog'},bar),txt);
   const before=snap(),d=currentDisplay();let rep;
   const onMissing=problems=>new Promise(res=>{
@@ -2831,12 +2852,12 @@ async function startAutomate(opt){
     }
     m.body.append(el('p',{class:'hint',text:'Tip: re-importing the exact image used in the reference usually fixes these. Afterwards you can also select a layer and use Edit › Align to Reference.'}));
     const back=v=>{m.body.innerHTML='';keepNodes.forEach(n=>m.body.append(n));m.setActions([]);res(v);};
-    m.setActions([{label:'Cancel Automate',onClick:()=>back(null)},{label:'Continue',kind:'primary',onClick:()=>{const c={};for(const id in picks)c[id]=picks[id].value;back(c);}}]);
+    m.setActions([{label:'Cancel Auto-Align',onClick:()=>back(null)},{label:'Continue',kind:'primary',onClick:()=>{const c={};for(const id in picks)c[id]=picks[id].value;back(c);}}]);
   });
   try{rep=await runAutomate({...opt,onMissing},(f,t)=>{bar.style.width=Math.round(f*100)+'%';txt.textContent=t;});}
   catch(err){restoreSnap(before);refreshAll();levelCache.clear();
-    if(err&&err.cancelled){m.close();toast('Automate cancelled. Nothing was changed.');return;}
-    console.error(err);m.body.innerHTML='';m.body.append(el('p',{text:`Automate stopped: ${err.message}. Nothing was changed.`}));m.setActions([{label:'Close',onClick:c=>c()}]);return;}
+    if(err&&err.cancelled){m.close();toast('Auto-Align cancelled. Nothing was changed.');return;}
+    console.error(err);m.body.innerHTML='';m.body.append(el('p',{text:`Auto-Align stopped: ${err.message}. Nothing was changed.`}));m.setActions([{label:'Close',onClick:c=>c()}]);return;}
   if(snap()!==before)pushUndo(before);
   refreshAll();animateFrom(d,700);
   m.body.innerHTML='';
@@ -2848,9 +2869,9 @@ async function startAutomate(opt){
 function askAutomate(){
   if(P.layers.filter(L=>isImg(L)&&!isStarter(L)).length<2)return;
   const only=new Set(sel);
-  modal({title:'Apply Automate?',body:[el('p',{class:'ask',text:'Would you like to apply the automate function?'}),
-    el('p',{text:`Automate lines ${only.size?`the ${only.size} imported image${only.size>1?'s':''}`:'your images'} up with any matching image below ${only.size===1?'it':'them'} in the Layers panel, such as a finished poster, in every aspect ratio.`})],
-    actions:[{label:'Not now',onClick:c=>c()},{label:'Apply Automate',kind:'primary',onClick:c=>{c();alignToSimilar(only);}}]});
+  modal({title:'Apply Auto-Align?',body:[el('p',{class:'ask',text:'Would you like to apply the auto-align function?'}),
+    el('p',{text:`Auto-Align lines ${only.size?`the ${only.size} imported image${only.size>1?'s':''}`:'your images'} up with any matching image below ${only.size===1?'it':'them'} in the Layers panel, such as a finished poster, in every aspect ratio.`})],
+    actions:[{label:'Not now',onClick:c=>c()},{label:'Apply Auto-Align',kind:'primary',onClick:c=>{c();alignToSimilar(only);}}]});
 }
 /* =====================================================================
    10. SAVE / OPEN / EXPORT
@@ -3048,19 +3069,19 @@ async function exportAllPNG(asZip,opts){
 }
 async function exportPackage(){
   const target=await chooseSaveTarget(projectFileBase(),'.zip',{title:'Export project package',ok:'Export',desc:'Project package (ZIP)',mime:'application/zip'});if(!target)return;
-  const {obj,files}=serialize('package'),embedded=serialize('embed').obj,root=projectFileBase()+'/';
+  const {obj,files}=serialize('package'),embedded=serialize('embed').obj,root=projectFileBase()+'/',saved=projectFileBase()+'.poster.html';
   const enc=new TextEncoder();
   const readme=`${P.meta.name} — Universal Posters project package
 Saved ${new Date().toLocaleString()}
 
-project.html   Self-contained. Open in any browser for a responsive preview and PNG/ZIP exports. Open with File > Open in Universal Posters to keep editing (choose this ZIP).
+${saved}   The saved project (the same file File > Save makes), with every image inside it. Open it with File > Open in Universal Posters to keep editing, or in any browser for a responsive preview and PNG/ZIP exports.
 project.json   Layers, categories, opacity, layouts, shared positions, per-layout overrides and export settings.
 assets/        Poster images as PNG (originals, never modified).
 references/    Reference posters as PNG.
 
 Layouts: ${P.ratios.map(r=>`${r.name} ${r.w}:${r.h}${r.key===P.baseRatio?' (base)':''}${ovCount(r.key)?` – ${ovCount(r.key)} custom positions`:''}`).join('; ')}
 `;
-  const zf=[{name:root+'project.html',data:enc.encode(projectHTML(embedded))},{name:root+'project.json',data:enc.encode(JSON.stringify(obj,null,1))},{name:root+'README.txt',data:enc.encode(readme)},...files.map(f=>({name:root+f.name,data:f.data}))];
+  const zf=[{name:root+saved,data:enc.encode(projectHTML(embedded))},{name:root+'project.json',data:enc.encode(JSON.stringify(obj,null,1))},{name:root+'README.txt',data:enc.encode(readme)},...files.map(f=>({name:root+f.name,data:f.data}))];
   const r=await target.write(makeZip(zf));
   if(r==='saved'){dirty=false;renderSaveState();toast(`Exported ${target.name}`,'ok');}
 }
@@ -3185,7 +3206,7 @@ async function resumeSession(){
   catch(e){toast(e.message,'error');}finally{busyEnd();}
 }
 async function loadSample(){
-  toast('Building the sample poster and running Automate…');
+  toast('Building the sample poster and running Auto-Align…');
   try{await document.fonts.load('700 120px "Instrument Sans"');}catch(e){}
   P=newProject();projectHandle=null;IMG.clear();HIST.undo.length=HIST.redo.length=0;sel.clear();
   P.meta.name='Night Market (sample)';
@@ -3228,7 +3249,7 @@ async function loadSample(){
   sel.clear();dirty=false;lastSavedName=null;HIST.undo.length=HIST.redo.length=0;
   if(previewMode)setPreviewMode(false);
   refreshAll();animateFrom({A:1,pl:{}},800);
-  toast('Sample loaded and automated. Switch layouts above, or turn the hidden reference layers on to compare.','ok');
+  toast('Sample loaded and auto-aligned. Switch layouts above, or turn the hidden reference layers on to compare.','ok');
 }
 /* Everything the app waits for before opening: page assets, web fonts and the autosave lookup (capped at 8 s). */
 const bootReady=(async()=>{
@@ -3322,17 +3343,20 @@ function layerMapper(L){
 }
 function penMap(){
   if(!pen.L){const k=2400/Math.max(curFrame.w,curFrame.h);return {k,to:p=>[p.x*k,p.y*k]};}
+  if(pen.L.type!=='draw'){const m=layerMapper(pen.L);return {k:1/m.kx,to:p=>m.to(p)};}   // painting straight onto an image: its own pixels
   const d=pen.L.draw,m=layerMapper(pen.L);
   return {k:1/(m.kx*d.r),to:p=>{const u=m.to(p);return [u[0]/d.r+d.ox,u[1]/d.r+d.oy];}};
 }
 function startDraw(L){
   if(textEdit)finishTextEdit();if(cut)endCut(true);
-  if(L&&(L.type!=='draw'||!selectable(L)))L=null;
+  if(L&&(!selectable(L)||isRef(L)))L=null;
+  if(L&&L.type==='text'){   // painting on text makes it a picture: its text can't be edited after that
+    const t=L;edit(()=>{t.type='image';delete t.text;delete t.textMode;delete t.showIn;},{animate:false});toast(`${t.name} is now an image, so it can be painted on`);}
   pen={L:L||null,live:null,hover:null};if(L)sel=new Set([L.id]);else sel.clear();
   cv.style.cursor='crosshair';
   if(UI.dockCollapsed||UI.pane!=='props')setUI({pane:'props',dockCollapsed:false,propsCollapsed:false});
   refreshSelection();
-  toast(L?`Drawing on ${L.name}. Press Done or Esc when you’re finished.`:'Draw on the poster. Your strokes go on a new drawing layer. Press Done or Esc when you’re finished.');
+  toast(L?`Drawing on ${L.name}${L.type!=='draw'?'. The eraser removes parts of the image':''}. Press Done or Esc when you’re finished.`:'Draw on the poster. Your strokes go on a new drawing layer. Press Done or Esc when you’re finished.');
 }
 function endDraw(){if(!pen)return;pen=null;cv.style.cursor='default';refreshSelection();}
 function penDown(p){
@@ -3357,6 +3381,7 @@ function penUp(){
     },{animate:false});
     return;
   }
+  if(pen.L.type!=='draw')return paintImage(pen.L,stroke);
   const L=pen.L,oldA=assetOf(L),od=L.draw,nd={strokes:[...od.strokes,stroke],ox:od.ox,oy:od.oy,r:od.r},R=rasterDrawing(nd);
   edit(()=>{
     if(!R){   // everything was erased: the layer goes (Undo brings it back)
@@ -3364,6 +3389,22 @@ function penUp(){
     const A=canvasAsset(R.canvas,'drawing.png');
     reanchor(L,oldA,A,{x:(R.ox-od.ox)*od.r,y:(R.oy-od.oy)*od.r,w:A.w/R.r*od.r,h:A.h/R.r*od.r});
     L.draw={strokes:nd.strokes,ox:R.ox,oy:R.oy,r:R.r};
+  },{animate:false});
+}
+/* Paint or erase straight onto an image layer. The image grows to take in paint beyond its edges and is cropped
+   back to what's left after erasing, so its box always hugs it; it stays exactly where it is on the poster. */
+function paintImage(L,stroke){
+  const oldA=assetOf(L),img=getImg(oldA.id);if(!img)return;
+  let x0=0,y0=0,x1=oldA.w,y1=oldA.h;
+  if(!stroke.e){const m=stroke.w/2+2;for(let i=0;i<stroke.p.length;i+=2){x0=Math.min(x0,stroke.p[i]-m);y0=Math.min(y0,stroke.p[i+1]-m);x1=Math.max(x1,stroke.p[i]+m);y1=Math.max(y1,stroke.p[i+1]+m);}}
+  x0=Math.floor(Math.max(x0,-4096));y0=Math.floor(Math.max(y0,-4096));x1=Math.ceil(Math.min(x1,oldA.w+4096));y1=Math.ceil(Math.min(y1,oldA.h+4096));
+  const c=canvasOf(Math.max(1,x1-x0),Math.max(1,y1-y0)),x=c.getContext('2d');x.drawImage(img,-x0,-y0,oldA.w,oldA.h);
+  strokePath(x,stroke,x0,y0,1);
+  const cr=alphaCrop(c);
+  edit(()=>{
+    if(!cr){P.layers=P.layers.filter(q=>q!==L);delete P.layouts.shared[L.id];for(const rk in P.layouts.overrides)delete P.layouts.overrides[rk][L.id];sel.clear();pen.L=null;return;}
+    const A=canvasAsset(cr.c,oldA.name.replace(/(-painted)?\.png$/i,'')+'-painted.png');
+    reanchor(L,oldA,A,{x:x0+cr.x,y:y0+cr.y,w:A.w,h:A.h},isBg(L)?'other':L.category);
   },{animate:false});
 }
 const SWATCHES=['#000000','#ffffff','#ff3b30','#ff9500','#ffcc00','#34c759','#007aff','#af52de'];
