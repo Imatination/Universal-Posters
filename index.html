@@ -2419,7 +2419,7 @@ async function alignToSimilar(only){
   let Ls=only&&only.size?[...only].map(layerBy).filter(ok):[];
   if(!Ls.length)Ls=P.layers.filter(ok);
   if(Ls.length<1||P.layers.filter(L=>isImg(L)&&!isStarter(L)).length<2)return toast('Import the artwork and the finished poster (or any image that contains it) first. Automate lines each layer up with a matching image below it.','error');
-  const area=L=>assetOf(L).w*assetOf(L).h,found=[],missed=[];
+  const area=L=>assetOf(L).w*assetOf(L).h,found=[],missed=[],closest=new Map();
   busyStart('Automate','Looking for matching images…');
   try{
     for(const [n,L] of Ls.entries()){
@@ -2432,7 +2432,10 @@ async function alignToSimilar(only){
         if(m&&(!best||m.err<best.m.err))best={C,m};
         if(m&&m.quality==='good')break;
       }
-      if(best&&best.m.err<=40)found.push({L,...best});else missed.push(L);
+      // nothing convincing: still find the closest spot in the nearest image, in case you want it anyway
+      if(!best&&below.concat(above).length){const C=below[0]||above[0],CA=assetOf(C),A=assetOf(L);
+        try{let t=await matchTemplate(getImg(CA.id),CA.w,CA.h,getImg(A.id),A.w/A.h);if(t){t.method='shape';t.rot=0;t=await refineMatch(getImg(CA.id),CA,getImg(A.id),A,t);best={C,m:t,forced:true};}}catch(e){console.warn(e);}}
+      if(best&&!best.forced&&best.m.err<=24)found.push({L,...best});else{missed.push(L);if(best)closest.set(L,best);}
     }
     // a photo used as a background is usually cropped in the finished poster: match it as a crop instead
     for(const L of [...missed]){const A=assetOf(L);if(!(A.stats&&A.stats.opaque>.97))continue;
@@ -2449,10 +2452,39 @@ async function alignToSimilar(only){
       found.splice(found.findIndex(f=>f.L===host),1);}
     for(const f of found){const j=missed.indexOf(f.C);if(j>=0)missed.splice(j,1);}
   }finally{levelCache.clear();busyEnd();}
-  if(!found.length)return toast(`Couldn’t find ${missed.length===1?missed[0].name:'the selected layers'} in any other image. Put the finished poster (or the image to match) below the layers to align.`,'error');
-  edit(()=>{for(const f of found)placeOnMatch(f.L,f.C,f.m);});
+  // anything that couldn't be aligned: ask what to do with each one
+  let picks={};
+  if(missed.length){picks=await alignProblems(missed,closest,found.length);if(!picks)return toast('Automate cancelled. Nothing was changed.');}
+  const centred=[],kept=[],forced=[];
+  edit(()=>{for(const f of found)placeOnMatch(f.L,f.C,f.m);
+    for(const L of missed){const v=picks[L.id];
+      if(v==='best'&&closest.has(L)){const c=closest.get(L);placeOnMatch(L,c.C,c.m);forced.push(L.name);}
+      else if(v==='centre'){centreFit(L);centred.push(L.name);}
+      else kept.push(L.name);}});
   const parts=found.map(f=>`${f.L.name} → ${f.C.name} (${pixelText(f.m.err)})`);
-  toast(`Aligned ${parts.join(', ')}${missed.length?`. No match for ${missed.map(L=>L.name).join(', ')}`:''}`,'ok');
+  const msg=[parts.length?`Aligned ${parts.join(', ')}`:'',forced.length?`Closest match used for ${forced.join(', ')}`:'',centred.length?`Centred and scaled ${centred.join(', ')}`:'',kept.length?`Left ${kept.join(', ')} as ${kept.length>1?'they were':'it was'}`:''].filter(Boolean).join('. ');
+  toast(msg||'Nothing was changed',found.length||forced.length||centred.length?'ok':undefined);
+}
+function alignProblems(missed,closest,nFound){
+  return new Promise(res=>{const picks={};
+    const body=[el('p',{text:`${nFound?`${nFound} layer${nFound>1?'s were':' was'} aligned. `:''}${missed.length>1?`${missed.length} layers`:'One layer'} couldn’t be matched reliably to another image. Choose what to do with ${missed.length>1?'each':'it'}:`})];
+    for(const L of missed){const c=closest.get(L),opts=[];
+      if(c)opts.push(['best',`Try to align as best as possible (closest: ${c.C.name}, ${pixelText(c.m.err)})`]);
+      opts.push(['centre','Position and scale it to the centre'],['keep','Leave as is']);
+      const s2=el('select',{'aria-label':`What to do with ${L.name}`},...opts.map(([v,t])=>el('option',{value:v,text:t})));s2.value=c&&c.m.err<=32?'best':'centre';picks[L.id]=s2;
+      body.push(el('div',{class:'problem'},el('div',{class:'pt'},el('b',{text:L.name}),el('span',{text:c?'Only a loose match was found. The artwork may differ from the image it’s in, or be partly covered.':'Not found in any other image. Put the finished poster (or the image to match) below it in the Layers panel.'})),s2));}
+    body.push(el('p',{class:'hint',text:'Tip: importing the exact artwork used in the finished poster gives the best match.'}));
+    modal({title:'Some layers couldn’t be aligned',body,onClose:()=>res(null),
+      actions:[{label:'Cancel',onClick:c=>{c();res(null);}},{label:'Apply',kind:'primary',onClick:c=>{const o={};for(const id in picks)o[id]=picks[id].value;c();res(o);}}]});
+  });
+}
+// Centre an image on the poster, scaled to fit, in every aspect ratio (or just this one when unlinked)
+function centreFit(L){
+  if(isBg(L))L.category='other';
+  const q={...E.effective(P,L,P.activeRatio),ax:.5,ay:.5,fit:'fit',rot:0};delete q.cell;delete q.free;delete q.dx;delete q.dy;
+  const o=P.layouts.overrides;
+  if(L.linked===false){(o[P.activeRatio]||(o[P.activeRatio]={}))[L.id]=q;return;}
+  P.layouts.shared[L.id]=q;for(const k in o)if(o[k][L.id])delete o[k][L.id];
 }
 // m: where L appears in C's image (fractions of C's image, plus extra turn). Sets L to that spot in each layout.
 function placeOnMatch(L,C,m){
