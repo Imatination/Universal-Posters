@@ -80,6 +80,9 @@ button{cursor:pointer}
 .dropdown .mi:hover:not(:disabled) .sc{color:var(--accent-ink)}
 .dropdown .sep{height:1px;background:var(--line);margin:5px 4px}
 .dropdown .hd{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:6px 10px 3px 30px}
+#btnGenName{white-space:nowrap;flex:none}
+#layersPnl>.pnl-h{flex-wrap:wrap;row-gap:6px}
+#layersPnl>.pnl-h .btn.small{padding-inline:7px}
 #docname{margin-left:auto;min-width:0;max-width:240px;width:100%;background:transparent;border:1px solid transparent;border-radius:5px;padding:4px 8px;text-align:right;color:var(--text)}
 #docname:hover{border-color:var(--line)}
 #docname:focus{border-color:var(--line-2);background:var(--field);text-align:left}
@@ -169,6 +172,15 @@ button{cursor:pointer}
 /* dock */
 #dock{background:var(--panel);border-left:1px solid var(--line);display:grid;grid-template-rows:minmax(0,1fr) auto;min-height:0;min-width:0}
 .pnl{display:grid;grid-template-rows:auto minmax(0,1fr) auto;min-height:0}
+#layersPnl{grid-template-rows:auto auto minmax(0,1fr) auto}
+.tools{padding:8px 10px 10px 12px;border-bottom:1px solid var(--line);background:var(--chrome);display:grid;gap:7px}
+.tools h3{margin:0;font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.toolbtns{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.tbtn{display:grid;justify-items:center;gap:3px;padding:7px 2px 6px;letter-spacing:-.01em;border:1px solid var(--line-2);border-radius:7px;background:var(--panel);color:var(--text);cursor:pointer;font-size:10.5px;min-width:0}
+.tbtn span{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tbtn:hover{border-color:var(--accent);color:var(--accent)}
+.tbtn.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.tbtn i{display:grid;place-items:center;height:18px}
 .pnl-h{display:flex;align-items:center;gap:6px;padding:8px 10px 8px 12px;border-bottom:1px solid var(--line);background:var(--chrome)}
 .pnl-h h3{margin:0;font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);font-weight:600}
 .pnl-h .count{font:11px var(--mono);color:var(--faint)}
@@ -365,6 +377,7 @@ select option{background:var(--panel);color:#c2ccc6}
 #busy{position:fixed;inset:0;z-index:95;display:grid;place-items:center;background:rgba(5,8,6,.55);cursor:progress;opacity:0;animation:busyin .2s ease-out .15s forwards}
 #busy .card{display:grid;justify-items:center;gap:12px;padding:20px 26px;min-width:220px;max-width:min(360px,calc(100% - 32px));background:var(--panel);border:1px solid var(--line-2);border-radius:12px;box-shadow:0 24px 60px rgba(0,0,0,.5);text-align:center}
 #busy .bt{font-weight:600}
+#busy #busyCancel{cursor:pointer}
 #busy .bs{font:11.5px var(--mono);color:var(--muted);overflow-wrap:anywhere}
 @keyframes busyin{to{opacity:1}}
 #splash .lt{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
@@ -401,6 +414,8 @@ select option{background:var(--panel);color:#c2ccc6}
   #dock.pane-props #props{display:block;max-height:none;border-top:0;overflow:auto}
   #dock.pane-props #props > .pnl-h{display:none}
   #layersPnl.collapsed #layers,#layersPnl.collapsed .pnl-f{display:grid}
+  .tools{padding:6px 10px;gap:0}.tools h3{display:none}
+  .tbtn{grid-auto-flow:column;align-items:center;justify-content:center;gap:5px;padding:5px 4px}
   #props.collapsed .body{display:grid}
   #dock.collapsed > :not(.dock-tabs){display:none!important}
   #dock.collapsed .dock-tabs{border-bottom:0}
@@ -416,7 +431,7 @@ select option{background:var(--panel);color:#c2ccc6}
   <header id="menubar" class="band">
     <div class="brand"><div class="mini-icon"><img src="data:image/png;base64,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" alt=""></div><span>Universal Posters</span></div>
     <nav id="menus" aria-label="Main menu"></nav>
-    <input id="docname" type="text" value="Untitled poster" aria-label="Project name" spellcheck="false">
+    <input id="docname" type="text" value="Untitled" aria-label="Project name" spellcheck="false"><button class="btn small ghost" id="btnGenName" type="button" title="Read the title or logo in your poster and name the project after it">Generate Name</button>
     <span id="savestate">Not saved</span>
   </header>
   <div id="optbar" class="band"><div class="inner" id="optinner"></div></div>
@@ -444,8 +459,14 @@ select option{background:var(--panel);color:#c2ccc6}
         <span class="sp"></span><button class="ib" id="dockToggle" aria-label="Hide panels" title="Hide panels"></button>
       </div>
       <section class="pnl" id="layersPnl" aria-label="Layers">
+        <div class="tools" role="group" aria-label="Tools"><h3>Tools</h3><div class="toolbtns">
+          <button class="tbtn" id="btnImport" type="button" title="Import images"><i data-ic="import"></i><span>Import</span></button>
+          <button class="tbtn" id="btnRefs" type="button" title="Import reference images: finished posters for Auto-Align to match, scaled to fill each layout"><i data-ic="refs"></i><span>References</span></button>
+          <button class="tbtn" id="btnText" type="button" title="Add a text layer"><i data-ic="text"></i><span>Text</span></button>
+          <button class="tbtn" id="btnDraw" type="button" title="Draw on the selected layer, or on a new layer if none is selected"><i data-ic="brush"></i><span>Draw</span></button>
+        </div></div>
         <div class="pnl-h"><button class="ib chev" data-collapse="layers" aria-label="Collapse layers" title="Collapse"></button><input type="checkbox" id="selAll" aria-label="Select all layers" title="Select all layers"><h3>Layers</h3><span class="count" id="lcount"></span><span class="sp"></span>
-          <button class="btn small ghost" id="btnImport" title="Import images">Import</button><button class="btn small ghost" id="btnText" title="Add a text layer">Text</button><button class="btn small ghost" id="btnDraw" title="Draw on the selected layer, or on a new layer if none is selected">Draw</button>
+          
         </div>
         <ul id="layers" aria-label="Layer list"></ul>
         <div class="pnl-f">
@@ -473,7 +494,7 @@ select option{background:var(--panel);color:#c2ccc6}
   <div class="skip">Click to skip</div>
 </div>
 <div id="toasts" aria-live="polite"></div>
-<div id="busy" hidden role="alertdialog" aria-modal="true" aria-live="polite"><div class="card"><span class="ring" aria-hidden="true"></span><span class="bt">Importing…</span><span class="bs"></span></div></div>
+<div id="busy" hidden role="alertdialog" aria-modal="true" aria-live="polite"><div class="card"><span class="ring" aria-hidden="true"></span><span class="bt">Importing…</span><span class="bs"></span><button class="btn small" id="busyCancel" type="button" hidden>Cancel</button></div></div>
 <input type="file" id="filein" hidden>
 
 <script>
@@ -568,6 +589,7 @@ function UPEngine(){
     for(var i=0;i<p.layers.length;i++){
       var L=p.layers[i]; if(!L.visible||!textShown(L,rk,W,H,p)||(opts.skip&&opts.skip[L.id])) continue;
       var isRef=L.category==='reference'; if(isRef&&!opts.includeRefs) continue;
+      if(isRef&&p.assets[L.assetId]&&Math.abs(Math.log((p.assets[L.assetId].w/p.assets[L.assetId].h)/(W/H)))>0.012) continue;   // a reference shows only in the layout of its own shape
       var sw=opts.swap&&opts.swap[L.id]; var A=sw?sw.A:p.assets[L.assetId]; var img=sw?sw.img:(A&&getImg(A.id)); if(!img) continue;
       var pl=(opts.placements&&opts.placements[L.id])||effective(p,L,rk);
       var vis=isRef?1:alphaOf(pl); if(vis<=0.002) continue;
@@ -751,6 +773,9 @@ const ICONS={
   link:'<path d="M6.8 9.2a2.8 2.8 0 0 0 4 0l2-2a2.8 2.8 0 0 0-4-4l-.8.8"/><path d="M9.2 6.8a2.8 2.8 0 0 0-4 0l-2 2a2.8 2.8 0 0 0 4 4l.8-.8"/>',
   unlink:'<path d="M9.5 3.6l.3-.3a2.8 2.8 0 0 1 4 4l-1.6 1.6M6.5 12.4l-.3.3a2.8 2.8 0 0 1-4-4l1.6-1.6"/><path d="M2.5 2.5l11 11"/>',
   removeBg:'<rect x="2" y="2" width="12" height="12" rx="1.5" stroke-dasharray="2 1.6"/><path d="M8 5.2a2 2 0 1 1 0 4 2 2 0 0 1 0-4zM4.6 13.5c.5-2 1.8-3.2 3.4-3.2s2.9 1.2 3.4 3.2"/>',
+  import:'<path d="M8 2v8M4.8 7 8 10.2 11.2 7"/><path d="M2.5 10.5v2a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1v-2"/>',
+  text:'<path d="M3 3.5h10M8 3.5v9.5M6 13h4"/>',
+  brush:'<path d="M13.5 2.5 7 9"/><path d="M6.6 9.4c-1.6-.4-3 .6-3.1 2.2-.1 1-.5 1.6-1.2 1.9 2.2.8 4.6.2 5.2-1.6.3-.9 0-1.9-.9-2.5z"/>',
   scissors:'<circle cx="4.5" cy="11.5" r="2"/><circle cx="11.5" cy="11.5" r="2"/><path d="M5.9 10 12.5 2M10.1 10 3.5 2"/>',
   resetAll:'<path d="M3 8a5 5 0 1 0 1.6-3.7"/><path d="M3 2.5v3h3"/><circle cx="8" cy="8" r="1.3"/>',
 };
@@ -770,7 +795,7 @@ const catName=c=>(CATS.find(x=>x[0]===c)||[0,c])[1];
 
 function newProject(){
   return {format:'universal-posters',version:1,
-    meta:{id:uid('proj'),name:'Untitled poster',created:Date.now(),modified:Date.now()},
+    meta:{id:uid('proj'),name:'Untitled',created:Date.now(),modified:Date.now()},
     settings:{canvasColor:null,grid:false,showRefs:true,exportLong:2400,exportIncludeRefs:false,exportGrid:false},
     ratios:PRESETS.map(r=>({...r})),baseRatio:'square',activeRatio:'square',
     assets:{},layers:[],layouts:{shared:{},overrides:{},meta:{}}};
@@ -916,9 +941,10 @@ function insertLayer(L){
 }
 /* Busy state: shows the loading overlay and ignores all input until the work finishes. */
 let busyCount=0;
-function busyStart(title,sub=''){busyCount++;const b=$('#busy');b.querySelector('.bt').textContent=title;b.querySelector('.bs').textContent=sub;b.hidden=false;closeMenus();}
+function busyStart(title,sub='',onCancel){busyCount++;const b=$('#busy');b.querySelector('.bt').textContent=title;b.querySelector('.bs').textContent=sub;b.hidden=false;closeMenus();
+  const c=$('#busyCancel');c.hidden=!onCancel;c.disabled=false;c.textContent='Cancel';c.onclick=onCancel?()=>{c.disabled=true;c.textContent='Cancelling…';onCancel();}:null;}
 function busyUpdate(title,sub=''){const b=$('#busy');if(title)b.querySelector('.bt').textContent=title;b.querySelector('.bs').textContent=sub;}
-function busyEnd(){busyCount=Math.max(0,busyCount-1);if(!busyCount){const b=$('#busy');b.hidden=true;b.style.animation='none';b.offsetHeight;b.style.animation='';}}
+function busyEnd(){busyCount=Math.max(0,busyCount-1);if(!busyCount){const b=$('#busy');b.hidden=true;$('#busyCancel').hidden=true;b.style.animation='none';b.offsetHeight;b.style.animation='';}}
 for(const ev of ['keydown','keyup','paste','copy','wheel'])document.addEventListener(ev,e=>{if(busyCount){e.preventDefault();e.stopImmediatePropagation();}},{capture:true,passive:false});
 async function importFiles(files,mode){
   const list=[...files].filter(f=>/^image\//.test(f.type)||/\.(png|jpe?g|gif|webp|bmp|svg|avif)$/i.test(f.name));
@@ -934,6 +960,9 @@ async function importFiles(files,mode){
       const L={id:uid('lay'),assetId:asset.id,name:asset.name,category:cat,catAuto:mode!=='reference',visible:true,opacity:cat==='reference'?0.5:1};
       // every imported image starts centred and scaled to fit the poster (in each layout, as its shape allows)
       insertLayer(L); P.layouts.shared[L.id]=cat==='reference'?initialPlacement(L):{ax:.5,ay:.5,s:1,rot:0,zoom:1,show:true}; added.push(L);
+      // "background" in the file name: scaled to fill every layout and placed at the bottom (above the plain starter background)
+      if(cat!=='reference'&&/background/i.test(f.name)){P.layouts.shared[L.id]={ax:.5,ay:.5,s:1,rot:0,zoom:1,show:true,fit:'fill'};
+        P.layers.splice(P.layers.indexOf(L),1);const j=P.layers.findIndex(x=>!isStarter(x));P.layers.splice(j<0?P.layers.length:j,0,L);}
     }catch(e){toast(`Couldn't import ${f.name}: ${e.message}`,'error');}
   }
   }finally{busyEnd();}
@@ -962,11 +991,14 @@ async function importAssetsFlow(){
 }
 async function importRefsFlow(){
   const f=await pickFiles();if(!f.length)return;const added=await importFiles(f,'reference');if(!added.length)return;
-  if(!P.layers.some(L=>!isRef(L))){await decideInitialRatio(added);askImportAssets(added.length);}
+  // references fill every layout (cropped where the shape differs) and are locked in place; each also gets a layout of its own exact shape
+  edit(()=>{for(const R of added){R.locked=true;P.layouts.shared[R.id]={ax:.5,ay:.5,s:1,rot:0,zoom:1,show:true,fit:'fill'};for(const k in P.layouts.overrides)delete P.layouts.overrides[k][R.id];
+    const a=assetOf(R);ratioKeyFor(a.w,a.h);}},{animate:false});
+  if(!P.layers.some(L=>!isRef(L)&&!isStarter(L))){await decideInitialRatio(added);askImportAssets(added.length);}
   else askAutomate();
 }
 function askImportAssets(n){
-  const has=P.layers.some(L=>!isRef(L));
+  const has=P.layers.some(L=>!isRef(L)&&!isStarter(L));
   modal({title:has?'Import more assets?':'Import your poster assets?',
     body:el('p',{text:`${n>1?'Your reference posters are':'Your reference poster is'} ready. Would you like to import the images that make up your poster now, like the background, logo and other artwork? You can also do this later from File › Import.`}),
     actions:[{label:'Not now',onClick:c=>c()},{label:'Import assets…',kind:'primary',onClick:c=>{c();importAssetsFlow();}}]});
@@ -1113,7 +1145,8 @@ function ptIn(b,px,py){
   const lx=dx*Math.cos(r)-dy*Math.sin(r),ly=dx*Math.sin(r)+dy*Math.cos(r);
   return Math.abs(lx)<=b.w/2&&Math.abs(ly)<=b.h/2;
 }
-function selectable(L){return L.visible&&!L.locked&&E.effective(P,L,P.activeRatio).show!==false&&E.textShown(L,P.activeRatio,aspectOf(P.activeRatio),1,P);}
+function refFits(L,rk){const a=assetOf(L);return !isRef(L)||!a||Math.abs(Math.log((a.w/a.h)/aspectOf(rk||P.activeRatio)))<=.012;}
+function selectable(L){return refFits(L)&&L.visible&&!L.locked&&E.effective(P,L,P.activeRatio).show!==false&&E.textShown(L,P.activeRatio,aspectOf(P.activeRatio),1,P);}
 function hitLayer(x,y){
   for(let i=P.layers.length-1;i>=0;i--){const L=P.layers[i];if(selectable(L)&&!isBg(L)&&!isRef(L)&&ptIn(boxOf(L),x,y))return L;}
   for(let i=P.layers.length-1;i>=0;i--){const L=P.layers[i];if(selectable(L)&&isRef(L)&&ptIn(boxOf(L),x,y))return L;}
@@ -1427,9 +1460,13 @@ function roleChange(L,role){
       for(const rk in P.layouts.overrides){const o=P.layouts.overrides[rk][L.id];if(o){const q=conv(o,rk);q.free=true;P.layouts.overrides[rk][L.id]=q;}}}
     if(cat==='background'){P.layouts.shared[L.id]=E.defaultPlacement(L);for(const rk in P.layouts.overrides)delete P.layouts.overrides[rk][L.id];
       const i=P.layers.indexOf(L);P.layers.splice(i,1);const j=P.layers.findIndex(x=>!isBg(x));P.layers.splice(j<0?P.layers.length:j,0,L);}
-    if(cat==='reference'){P.layouts.shared[L.id]=E.defaultPlacement(L);for(const rk in P.layouts.overrides)delete P.layouts.overrides[rk][L.id];
-      if(L.opacity>.99)L.opacity=.5;const i=P.layers.indexOf(L);P.layers.splice(i,1);P.layers.push(L);}
-    if(from==='reference'&&Math.abs(L.opacity-.5)<.001)L.opacity=1;
+    if(cat==='reference'){   // a reference: fills every layout, faded, locked, at the top with the other references
+      P.layouts.shared[L.id]={ax:.5,ay:.5,s:1,rot:0,zoom:1,show:true,fit:'fill'};for(const rk in P.layouts.overrides)delete P.layouts.overrides[rk][L.id];
+      if(L.opacity>.99)L.opacity=.5;L.locked=true;const a=assetOf(L);ratioKeyFor(a.w,a.h);
+      const i=P.layers.indexOf(L);P.layers.splice(i,1);P.layers.push(L);}
+    if(from==='reference'&&cat!=='reference'){   // back to an asset: full opacity, unlocked, on top of the other assets (under the references)
+      if(Math.abs(L.opacity-.5)<.001)L.opacity=1;L.locked=false;
+      const i=P.layers.indexOf(L);P.layers.splice(i,1);const j=P.layers.findIndex(isRef);P.layers.splice(j<0?P.layers.length:j,0,L);}
   });
 }
 function setCategory(L,cat){
@@ -1669,6 +1706,9 @@ function menuDefs(){
       {label:'Save As…',sc:MOD+'Shift+S',act:()=>saveProject(true)},
       {sep:1},
       {label:'Import…',sc:MOD+'I',act:importAssetsFlow},
+      {label:'References…',act:importRefsFlow},
+      {label:'Text',act:()=>{if(pen)endDraw();addTextLayer();}},
+      {label:'Draw',act:()=>startDraw(null)},
       {sep:1},
       {label:'Export…',sc:MOD+'E',act:()=>exportDialog()},
       {sep:1},
@@ -1705,9 +1745,9 @@ function menuDefs(){
     View:[
       {label:'Toggle Composition Grid',sc:"'",check:P.settings.grid,act:toggleGrid},
       {label:'Sticky Guides',check:UI.snap!==false,act:toggleSnap},
-      {label:'Show Reference Images',check:P.settings.showRefs!==false,act:toggleRefs},
       {label:'Preview All Layouts',sc:'P',check:previewMode,act:()=>setPreviewMode(!previewMode)},
       {sep:1},{hd:'Show'},
+      {label:'Reference Assets',check:refsShown(),dis:!P.layers.some(isRef),act:toggleRefs},
       {label:'Toolbar',check:!UI.notools,act:()=>setUI({notools:!UI.notools})},
       {label:'Aspect Ratios',check:!UI.notabs,act:()=>setUI({notabs:!UI.notabs})},
       {label:'Layers',check:!UI.layersCollapsed&&!UI.dockCollapsed,act:()=>setUI(UI.dockCollapsed?{dockCollapsed:false,pane:'layers',layersCollapsed:false}:{layersCollapsed:!UI.layersCollapsed,pane:'layers'})},
@@ -1778,7 +1818,7 @@ function renderOptbar(){
       el('button',{class:'zoomlbl',title:`Fit poster to window (${MOD}0)`,'aria-label':'Zoom level, click to fit',onclick:zoomFit,text:Math.round(viewZoom*100)+'%'}),
       ib('hand','Hand tool: drag to move the canvas (H, or hold Space)',()=>setTool(tool==='hand'?'select':'hand'),false,tool==='hand')),
     el('span',{class:'vsep'}),
-    el('div',{class:'grp'},ib('grid','Composition grid (rule of thirds)',toggleGrid,false,P.settings.grid),ib('magnet','Sticky guides: snap to the grid while dragging',toggleSnap,false,UI.snap!==false),ib('previews','Preview all layouts',()=>setPreviewMode(!previewMode),false,previewMode)),
+    el('div',{class:'grp'},ib('grid','Composition grid (rule of thirds)',toggleGrid,false,P.settings.grid),ib('magnet','Sticky guides: snap to the grid while dragging',toggleSnap,false,UI.snap!==false),ib('refs',refsShown()?'Hide All References':'Show All References',toggleRefs,!P.layers.some(isRef),refsShown()),ib('previews','Preview all layouts',()=>setPreviewMode(!previewMode),false,previewMode)),
     el('span',{class:'vsep'}),
     el('button',{class:'btn cutbtn','aria-pressed':String(!!cut),title:'Cut out: draw loosely around part of an image to keep just that part',onclick:startCut,html:icon('scissors')+'<span>Cut out</span>'}),
     el('button',{class:'btn','aria-label':'Remove background',title:'Remove background: keep the main subject of the selected image and remove the rest',onclick:autoCutout,html:icon('removeBg')+'<span>Remove background</span>'}),
@@ -1805,14 +1845,14 @@ function renderTabs(){
 let dragLayerId=null;
 function renderLayers(){
   {const sa=$('#selAll');if(sa){const n=P.layers.filter(L=>sel.has(L.id)).length;sa.checked=n>0&&n===P.layers.length;sa.indeterminate=n>0&&n<P.layers.length;sa.title=n===P.layers.length&&n?'Deselect all layers':'Select all layers';}}
-  {const db=$('#btnDraw');if(db){db.classList.toggle('on',!!pen);db.textContent=pen?'Done':'Draw';}}
+  {const db=$('#btnDraw');if(db){db.classList.toggle('on',!!pen);db.querySelector('span').textContent=pen?'Done':'Draw';}}
   const ul=$('#layers');ul.innerHTML='';
   $('#lcount').textContent=P.layers.length?String(P.layers.length):'';
   if(!P.layers.length){ul.append(el('li',{class:'emptyl',text:'No layers yet. Import assets or reference posters to begin.'}));}
   const rk=P.activeRatio;
   for(let i=P.layers.length-1;i>=0;i--){
     const L=P.layers[i],A=assetOf(L);if(!A)continue;
-    const ov=E.hasOverride(P,L.id,rk),hiddenHere=!isRef(L)&&(E.effective(P,L,rk).show===false||!E.textShown(L,rk,aspectOf(rk),1,P));
+    const ov=E.hasOverride(P,L.id,rk),hiddenHere=isRef(L)?!refFits(L,rk):(E.effective(P,L,rk).show===false||!E.textShown(L,rk,aspectOf(rk),1,P));
     const pct=Math.round(L.opacity*100);
     const rng=el('input',{type:'range',min:0,max:100,value:pct,'aria-label':`Opacity of ${L.name}`});
     const num=el('input',{type:'number',min:0,max:100,value:pct,'aria-label':`Opacity percent of ${L.name}`});
@@ -1913,9 +1953,10 @@ function renderProps(){
     if(L.type==='text')textProps(L,body);
     else if(L.type==='draw'){if(!pen)body.append(brushPanel(L));}
     else body.append(el('div',{class:'prow'},el('span',{class:'k',text:'Image'}),el('span',{class:'v',text:`${A.w} × ${A.h} PNG`})));
-    if(L.type!=='text'&&isRef(L)){
-      body.append(el('p',{class:'hint'},'Auto-Align found your other images inside this one, so it’s used as a reference poster: shown faded and never exported. ',
-        el('button',{class:'linkbtn',type:'button',text:'Use as a normal image',onclick:()=>roleChange(L,'reference')})));
+    if(isImg(L)&&!isStarter(L)){   // asset ⇄ reference
+      const rf=el('input',{type:'checkbox',role:'switch',checked:isRef(L)});rf.addEventListener('change',()=>{roleChange(L,'reference');toast(isRef(L)?`${L.name} is now a reference image`:`${L.name} is now an asset`,'ok');});
+      body.append(el('div',{class:'roleopt'},el('label',{class:'switch',title:'Reference images are finished posters for Auto-Align to match: shown faded, never exported'},rf,el('span',{class:'track','aria-hidden':'true'}),el('span',{text:'Reference image'})),
+        el('small',{text:isRef(L)?'Shown faded, locked and never exported. Auto-Align lines your assets up with it. Switch off to use it as a normal asset.':'Switch on to use this image as a reference: a finished poster for Auto-Align to match.'})));
     }
     if(isRef(L))body.append(el('div',{class:'prow'},el('span',{class:'k',text:'Ratio'}),el('span',{class:'v',text:(()=>{const [a,b]=reduceRatio(A.w,A.h);return a<=400?`${a}:${b}`:`${fmt(A.w/A.h,3)}:1`;})()})));
     if(L.locked){body.append(el('p',{class:'hint',text:'Locked: it can’t be moved, scaled or rotated until you unlock it. Auto-Align leaves it alone too.'}));return;}
@@ -2018,16 +2059,21 @@ $('#dockToggle').addEventListener('click',()=>setUI({dockCollapsed:!UI.dockColla
 document.querySelectorAll('.chev').forEach(b=>b.addEventListener('click',()=>{const k=b.dataset.collapse==='layers'?'layersCollapsed':'propsCollapsed';setUI({[k]:!UI[k]});}));
 function refreshSelection(){renderLayers();renderProps();renderOptbar();renderMenus();requestDraw();}
 function refreshAll(){if(typeof clampPan==='function'&&SW){clampPan();curFrame=frameRect(aspectOf(P.activeRatio));}renderMenus();renderOptbar();renderTabs();renderLayers();renderProps();renderStatus();renderSaveState();renderEmpty();requestDraw();schedulePreviews();}
-$('#docname').addEventListener('change',e=>{const v=e.target.value.trim()||'Untitled poster';P.meta.name=v;markDirty();});
+$('#docname').addEventListener('change',e=>{const v=e.target.value.trim()||'Untitled';P.meta.name=v;markDirty();});
 $('#docname').addEventListener('keydown',e=>{if(e.key==='Enter')e.target.blur();e.stopPropagation();});
 $('#selAll').onchange=()=>{const all=P.layers.length&&P.layers.every(L=>sel.has(L.id));sel=all?new Set():new Set(P.layers.map(L=>L.id));refreshSelection();};
 $('#btnImport').title=`Import images (${MOD}I)`;
-$('#btnImport').onclick=()=>importAssetsFlow();$('#btnText').onclick=()=>{if(pen)endDraw();addTextLayer();};$('#btnDraw').onclick=()=>{if(pen)return endDraw();const one=sel.size===1?layerBy([...sel][0]):null;startDraw(one&&!one.locked&&!isRef(one)?one:null);};
+$('#btnGenName').onclick=()=>generateName();
+document.querySelectorAll('.tbtn i[data-ic]').forEach(i=>{i.innerHTML=icon(i.dataset.ic);});
+$('#btnImport').onclick=()=>importAssetsFlow();$('#btnRefs').onclick=()=>importRefsFlow();$('#btnText').onclick=()=>{if(pen)endDraw();addTextLayer();};$('#btnDraw').onclick=()=>{if(pen)return endDraw();const one=sel.size===1?layerBy([...sel][0]):null;startDraw(one&&!one.locked&&!isRef(one)?one:null);};
 $('#lFront').innerHTML=icon('front');$('#lFwd').innerHTML=icon('forward');$('#lBack').innerHTML=icon('backward');$('#lBottom').innerHTML=icon('back');$('#lDup').innerHTML=icon('dup');$('#lDel').innerHTML=icon('trash');
 $('#lFront').onclick=()=>arrange('front');$('#lFwd').onclick=()=>arrange('forward');$('#lBack').onclick=()=>arrange('backward');$('#lBottom').onclick=()=>arrange('back');$('#lDup').onclick=duplicateSelected;$('#lDel').onclick=deleteSelected;
 function toggleSnap(){setUI({snap:UI.snap===false});toast(UI.snap?'Sticky guides on':'Sticky guides off');}
 function toggleGrid(){P.settings.grid=!P.settings.grid;renderOptbar();requestDraw();}
-function toggleRefs(){P.settings.showRefs=P.settings.showRefs===false;renderOptbar();requestDraw();toast(P.settings.showRefs?'Reference images shown':'Reference images hidden');}
+const refsShown=()=>P.layers.some(L=>isRef(L)&&L.visible);
+function toggleRefs(){const refs=P.layers.filter(isRef);if(!refs.length)return toast('No reference images yet. Use References in Tools to add some');
+  const on=!refsShown();edit(()=>{P.settings.showRefs=true;for(const R of refs)R.visible=on;},{animate:false});
+  toast(on?'All references shown':'All references hidden');}
 
 /* Simultaneous preview of every layout */
 let pvRaf=0;
@@ -2411,14 +2457,75 @@ const foundText=f=>`${f.method==='detail'?`found by detail matching (${f.inliers
 /* Auto-Align / Edit › Align to Reference: each selected layer (or every image when nothing is selected) looks for
    itself inside the images below it in the Layers panel (nearest first; never the ones above it), and is moved, scaled and turned to sit exactly over where it appears there, in every aspect ratio
    (or only this one, for an unlinked layer). */
+/* Auto-Align with reference images: every asset is found in each reference. A layout with a reference of its
+   own shape gets the asset exactly where it is in that reference; the shared position comes from the base
+   layout's reference (or the first one that has it), so layouts without a reference of their own adapt from it. */
+let alignStop=false;
+const stopCheck=()=>{if(alignStop)throw Object.assign(new Error('cancelled'),{cancelled:true});};
+function refBox(R,m,rk){const {W,H}=repDims(rk),RA=assetOf(R),cb=E.box(R,RA,E.effective(P,R,rk),W,H),r=(cb.rot||0)*Math.PI/180;
+  const lx=(m.x+m.w/2-.5)*cb.w,ly=(m.y+m.h/2-.5)*cb.h,cx=cb.x+cb.w/2+lx*Math.cos(r)-ly*Math.sin(r),cy=cb.y+cb.h/2+lx*Math.sin(r)+ly*Math.cos(r),w=m.w*cb.w,h=m.h*cb.h;
+  return {W,H,b:{x:cx-w/2,y:cy-h/2,w,h,rot:(((cb.rot||0)+(m.rot||0)+180)%360+360)%360-180}};}
+async function alignToRefs(Ls){
+  const refs=P.layers.filter(isRef),asp=R=>assetOf(R).w/assetOf(R).h;
+  const refFor=rk=>refs.filter(R=>Math.abs(Math.log(asp(R)/aspectOf(rk)))<.012).sort((a,b)=>(b.visible?1:0)-(a.visible?1:0))[0]||null;
+  const pool=refs;   // every reference: each layout lines up with the one it shows
+  const res=new Map();let tasks=Ls.length*pool.length,done=0;
+  for(const L of Ls){const per=new Map();
+    const bgL=assetOf(L).stats&&assetOf(L).stats.opaque>.97;   // a photo filling the poster: matched as a crop below
+    for(const R of pool){stopCheck();busyUpdate(null,`${++done} of ${tasks} · ${L.name} in ${R.name}`);await sleep(0);
+      if(bgL)continue;
+      const RA=assetOf(R);let m=null;try{m=await locateAsset(getImg(RA.id),RA,L);}catch(e){console.warn(e);}
+      const bgLike=assetOf(L).stats&&assetOf(L).stats.opaque>.97;
+      if(!bgLike&&!(m&&(m.quality==='good'||(m.method==='detail'&&m.inliers>=10)))){let p=null;try{p=partialMatch(getImg(RA.id),getImg(assetOf(L).id));}catch(e){}if(p&&(!m||p.err<m.err))m=p;}
+      if(m)per.set(R,m);}
+    res.set(L,per);}
+  // backgrounds are usually cropped in the reference: match them as crops of what's left
+  for(const L of Ls){const A=assetOf(L);if(!(A.stats&&A.stats.opaque>.97))continue;const per=res.get(L);
+    for(const R of pool){stopCheck();const m0=per.get(R);if(m0&&m0.err<=6)continue;const RA=assetOf(R);
+      const boxes=Ls.filter(x=>x!==L&&res.get(x).get(R)&&res.get(x).get(R).err<=24).map(x=>res.get(x).get(R));
+      busyUpdate(null,`${L.name} as a background crop of ${R.name}`);await sleep(0);
+      let fit=null;try{fit=fitBackground(getImg(A.id),A,getImg(RA.id),RA.w/RA.h,boxes);if(fit)fit={...fit,...await refineBg(getImg(A.id),A,getImg(RA.id),RA,fit,boxes)};}catch(e){}
+      if(fit&&fit.conf>=.3){const e=fit.err!=null?fit.err:20;if(!m0||e<m0.err){const k=Math.max(RA.w/A.w,RA.h/A.h)*Math.max(1,fit.zoom||1),w=A.w*k,h=A.h*k;
+        per.set(R,{x:(RA.w-w)*fit.ax/RA.w,y:(RA.h-h)*fit.ay/RA.h,w:w/RA.w,h:h/RA.h,rot:0,err:e});}}}}
+  return {res,refFor};
+}
+function applyRefAlign(L,per,refFor){
+  if(!per.size)return null;
+  if(isBg(L))L.category='other';
+  const A=assetOf(L),o=P.layouts.overrides,asp=R=>assetOf(R).w/assetOf(R).h;
+  // the reference each layout lines up with, as it's placed in that layout (scaled, moved or cropped):
+  // one of the layout's own shape first, otherwise the closest-shaped one that's showing there
+  const refIn=rk=>{const ex=refFor(rk);if(ex&&per.has(ex))return ex;
+    const c=[...per.keys()].filter(R=>R.visible!==false&&E.effective(P,R,rk).show!==false);const pool=c.length?c:[...per.keys()];
+    return pool.sort((a,b)=>Math.abs(Math.log(asp(a)/aspectOf(rk)))-Math.abs(Math.log(asp(b)/aspectOf(rk)))||per.get(a).err-per.get(b).err)[0];};
+  const plIn=(R,rk)=>{const t=refBox(R,per.get(R),rk);return E.fromBox(L,A,t.b,t.W,t.H,E.effective(P,L,rk));};
+  if(L.linked===false){const rk=P.activeRatio,R=refIn(rk);(o[rk]||(o[rk]={}))[L.id]=plIn(R,rk);return R;}
+  const base=P.baseRatio,R0=refIn(base);P.layouts.shared[L.id]=plIn(R0,base);if(o[base])delete o[base][L.id];
+  for(const r of P.ratios){if(r.key===base)continue;const R=refIn(r.key),t=refBox(R,per.get(R),r.key),sh=E.box(L,A,P.layouts.shared[L.id],t.W,t.H);
+    const same=Math.abs(sh.x-t.b.x)<.5&&Math.abs(sh.y-t.b.y)<.5&&Math.abs(sh.w-t.b.w)<.5&&Math.abs(sh.h-t.b.h)<.5&&Math.abs((sh.rot||0)-t.b.rot)<.05;
+    if(same){if(o[r.key])delete o[r.key][L.id];}else(o[r.key]||(o[r.key]={}))[L.id]=E.fromBox(L,A,t.b,t.W,t.H,P.layouts.shared[L.id]);}
+  return R0;
+}
 async function alignToSimilar(only){
   if(textEdit)finishTextEdit();if(pen)endDraw();if(cut)endCut(true);
-  const ok=L=>L&&isImg(L)&&!isStarter(L)&&!L.locked;
+  const useRefs=P.layers.some(isRef),ok=L=>L&&isImg(L)&&!isStarter(L)&&!L.locked&&!(useRefs&&isRef(L));
   let Ls=only&&only.size?[...only].map(layerBy).filter(ok):[];
   if(!Ls.length)Ls=P.layers.filter(ok);
+  alignStop=false;
+  if(useRefs){
+    if(!Ls.length)return toast('Import the assets to align too. Auto-Align lines them up with your reference images.','error');
+    busyStart('Auto-Align','Looking for your assets in the references…',()=>{alignStop=true;});let out;
+    try{out=await alignToRefs(Ls);}catch(e){if(e&&e.cancelled)return toast('Auto-Align cancelled. Nothing was changed.');console.error(e);return toast(`Auto-Align stopped: ${e.message}`,'error');}
+    finally{levelCache.clear();busyEnd();}
+    const ok2=[],none=[];
+    edit(()=>{for(const L of Ls){const per=out.res.get(L),R=applyRefAlign(L,per,out.refFor);if(R){const m=per.get(R);ok2.push(`${L.name} → ${R.name} (${m.err>24?'closest match, ':''}${pixelText(m.err)})`);}else none.push(L.name);}});
+    const noRef=[];
+    if(!ok2.length)return toast(`Couldn’t find ${none.join(', ')} in your reference images`,'error');
+    return toast(`Aligned ${ok2.join(', ')}${none.length?`. Couldn’t find ${none.join(', ')} in your references`:''}${noRef.length&&noRef.length<P.ratios.length?`. ${noRef.join(', ')} ${noRef.length>1?'have':'has'} no reference of ${noRef.length>1?'their':'its'} own shape, so ${noRef.length>1?'they adapt':'it adapts'} from the others`:''}`,none.length?'error':'ok');
+  }
   if(Ls.length<1||P.layers.filter(L=>isImg(L)&&!isStarter(L)).length<2)return toast('Import the artwork and the finished poster (or any image that contains it) first. Auto-Align lines each layer up with a matching image below it.','error');
   const area=L=>assetOf(L).w*assetOf(L).h,found=[],missed=[],closest=new Map();
-  busyStart('Auto-Align','Looking for matching images…');
+  busyStart('Auto-Align','Looking for matching images…',()=>{alignStop=true;});
   try{
     for(const [n,L] of Ls.entries()){
       const i=P.layers.indexOf(L),cand=x=>x!==L&&isImg(x)&&!isStarter(x);   // any image below, selected or not
@@ -2426,6 +2533,8 @@ async function alignToSimilar(only){
       let best=null;
       const better=(m,C)=>{if(m&&(!best||m.err<best.m.err))best={C,m};};
       for(const C of [...below,...above]){
+        if(alignStop)break;
+        if(assetOf(L).stats&&assetOf(L).stats.opaque>.97)break;   // photos filling the poster are matched as crops below
         if(area(C)<area(L)*.25)continue;   // far smaller than the artwork: can't be the image it's in
         busyUpdate(null,`${n+1} of ${Ls.length} · ${L.name} in ${C.name}`);await sleep(0);
         const CA=assetOf(C);let m=null;try{m=await locateAsset(getImg(CA.id),CA,L);}catch(e){console.warn(e);}
@@ -2434,7 +2543,7 @@ async function alignToSimilar(only){
         better(m,C);
       }
       // not sure yet: also look for the best partial match (cut off by an edge or partly covered)
-      if(!best||!best.sure)for(const C of [...below,...above]){
+      if((!best||!best.sure)&&!(assetOf(L).stats&&assetOf(L).stats.opaque>.97))for(const C of [...below,...above]){
         if(area(C)<area(L)*.25)continue;
         busyUpdate(null,`${n+1} of ${Ls.length} · partial match for ${L.name} in ${C.name}`);await sleep(0);
         let m=null;try{m=partialMatch(getImg(assetOf(C).id),getImg(assetOf(L).id));}catch(e){console.warn(e);}
@@ -2457,7 +2566,7 @@ async function alignToSimilar(only){
     found.sort((a,b)=>P.layers.indexOf(a.L)-P.layers.indexOf(b.L));
     for(const f of found){const j=missed.indexOf(f.C);if(j>=0)missed.splice(j,1);}
   }finally{levelCache.clear();busyEnd();}
-  // anything that couldn't be aligned: ask what to do with each one
+  if(alignStop)return toast('Auto-Align cancelled. Nothing was changed.');
   // no questions: every layer goes to its best match; only layers with no match at all stay where they are
   if(!found.length)return toast(`Couldn’t align ${missed.map(L=>L.name).join(', ')}: no matching image found. Put the finished poster (or the image to match) below the layers to align in the Layers panel.`,'error');
   edit(()=>{for(const f of found)placeOnMatch(f.L,f.C,f.m);});
@@ -2475,9 +2584,9 @@ function partialMatch(CImg,AImg){
     if(cand.length<12)return null;cand.sort((a,b)=>b[0]-a[0]);
     const strong=cand.slice(0,Math.min(260,Math.floor(cand.length*.25))),st=Math.max(1,Math.floor(cand.length/140));
     for(const c of strong)pts.push(c);for(let i=0;i<cand.length;i+=st)pts.push(cand[i]);}
-  const N=pts.length,diffs=new Float32Array(N);
+  const ALL=pts,FEW=pts.filter((_,i)=>i%Math.max(1,Math.floor(pts.length/70))===0);let use=FEW,N=use.length;const diffs=new Float32Array(ALL.length);
   const score=(C,x,y,w,h,bil,minIn)=>{let n=0;const W=C.w,H=C.h,d=C.d;
-    for(let i=0;i<N;i++){const p=pts[i],px=x+p[1]*w,py=y+p[2]*h;if(px<0||py<0||px>W-1||py>H-1)continue;
+    for(let i=0;i<N;i++){const p=use[i],px=x+p[1]*w,py=y+p[2]*h;if(px<0||py<0||px>W-1||py>H-1)continue;
       let r,g,b;if(bil){const x0=Math.floor(px),y0=Math.floor(py),tx=px-x0,ty=py-y0,x1=Math.min(W-1,x0+1),y1=Math.min(H-1,y0+1),
           i00=(y0*W+x0)*4,i10=(y0*W+x1)*4,i01=(y1*W+x0)*4,i11=(y1*W+x1)*4,f=(a,b2,c,e)=>(a*(1-tx)+b2*tx)*(1-ty)+(c*(1-tx)+e*tx)*ty;
           r=f(d[i00],d[i10],d[i01],d[i11]);g=f(d[i00+1],d[i10+1],d[i01+1],d[i11+1]);b=f(d[i00+2],d[i10+2],d[i01+2],d[i11+2]);}
@@ -2488,15 +2597,15 @@ function partialMatch(CImg,AImg){
     return s/keep+(1-n/N)*12;};   // a little preference for showing more of the artwork
   // coarse search over size and position, artwork allowed to hang past the edges
   const C0=imgPixels(CImg,110),tops=[];
-  for(let w=C0.w*.05;w<=C0.w*1.25;w*=1.08){const h=w/ar;if(h>C0.h*1.4||h<3)continue;
+  for(let w=C0.w*.08;w<=C0.w*1.25;w*=1.1){const h=w/ar;if(h>C0.h*1.4||h<3)continue;
     const sx=Math.max(1,w/14),sy=Math.max(1,h/14);
     for(let y=-.55*h;y<=C0.h-.45*h;y+=sy)for(let x=-.55*w;x<=C0.w-.45*w;x+=sx){const s=score(C0,x,y,w,h,false,.45);
       if(s<Infinity){tops.push([s,x/C0.w,y/C0.h,w/C0.w]);}}}
   if(!tops.length)return null;
   tops.sort((a,b)=>a[0]-b[0]);const seeds=[];for(const t of tops){if(seeds.every(s=>Math.hypot(s[1]-t[1],s[2]-t[2])>.04||Math.abs(Math.log(s[3]/t[3]))>.15))seeds.push(t);if(seeds.length>=6)break;}
-  // refine the best few at a higher resolution
-  let best=null;
-  for(const lv of [300,700,1400]){const C=imgPixels(CImg,lv),cand=best?[best]:seeds.map(s=>({x:s[1],y:s[2],w:s[3]}));const out=[];
+  // refine the best few at a higher resolution, with every sample point
+  use=ALL;N=use.length;let best=null;
+  for(const lv of [300,700]){const C=imgPixels(CImg,lv),cand=best?[best]:seeds.map(s=>({x:s[1],y:s[2],w:s[3]}));const out=[];
     for(let q of cand){let st=[2/C.w,2/C.h,.03],cur=score(C,q.x*C.w,q.y*C.h,q.w*C.w,q.w*C.w/ar,true,.4);
       for(let it=0;it<60&&st[0]*C.w>.15;it++){let moved=false;
         for(const [dx,dy,dz] of [[1,0,0],[-1,0,0],[0,1,0],[0,-1,0],[0,0,1],[0,0,-1]]){const t={x:q.x+dx*st[0],y:q.y+dy*st[1],w:q.w*Math.exp(dz*st[2])};
@@ -2867,10 +2976,12 @@ async function startAutomate(opt){
 }
 /* Asked right after imports once the project has both reference posters and assets. */
 function askAutomate(){
+  if(!P.layers.some(isRef))return;   // only offered when there are reference images to align with
   if(P.layers.filter(L=>isImg(L)&&!isStarter(L)).length<2)return;
+  if(P.layers.some(isRef)&&!P.layers.some(L=>isImg(L)&&!isStarter(L)&&!isRef(L)))return;
   const only=new Set(sel);
   modal({title:'Apply Auto-Align?',body:[el('p',{class:'ask',text:'Would you like to apply the auto-align function?'}),
-    el('p',{text:`Auto-Align lines ${only.size?`the ${only.size} imported image${only.size>1?'s':''}`:'your images'} up with any matching image below ${only.size===1?'it':'them'} in the Layers panel, such as a finished poster, in every aspect ratio.`})],
+    el('p',{text:`Auto-Align lines ${only.size?`the ${only.size} selected image${only.size>1?'s':''}`:'your images'} up with your reference image${P.layers.filter(isRef).length>1?'s':''} in every aspect ratio.`})],
     actions:[{label:'Not now',onClick:c=>c()},{label:'Apply Auto-Align',kind:'primary',onClick:c=>{c();alignToSimilar(only);}}]});
 }
 /* =====================================================================
@@ -3030,6 +3141,7 @@ async function loadProjectObject(obj,resolver){
   for(const L of np.layers)if(L.category==='reference'&&!(obj.version>=2)){np.layouts.shared[L.id]={ax:.5,ay:.5,s:1,rot:0,zoom:1,show:true};for(const rk in np.layouts.overrides)delete np.layouts.overrides[rk][L.id];}
   P=np;projectHandle=null;IMG.clear();imgs.forEach((v,k)=>IMG.set(k,v));HIST.undo.length=HIST.redo.length=0;sel.clear();
   // Older projects had a canvas colour. Posters are now transparent, so that colour becomes a locked background layer.
+  if(P.settings.showRefs===false){for(const L of P.layers)if(isRef(L))L.visible=false;P.settings.showRefs=true;}   // the old show/hide setting is now the layers' own visibility
   {const cc=P.settings.canvasColor;if(cc&&cc!=='transparent'){P.settings.canvasColor=null;const L=addSolidBackground(P,cc);L.starter=false;}}
   if(previewMode)setPreviewMode(false);refreshAll();
 }
@@ -3433,7 +3545,9 @@ function brushPanel(L){
    Colour models of what to keep and what to remove, a graph cut that follows the edges in the picture
    (GrabCut), then a full-resolution pass that softens the edge along the real outline.
    ===================================================================== */
-function imgPixels(img,maxSide){
+const PXC=new WeakMap();
+function imgPixels(img,maxSide){let m=PXC.get(img);if(!m){m=new Map();PXC.set(img,m);}if(m.has(maxSide))return m.get(maxSide);const r=imgPixels0(img,maxSide);m.set(maxSide,r);return r;}
+function imgPixels0(img,maxSide){
   const w0=img.naturalWidth||img.width,h0=img.naturalHeight||img.height,k=Math.min(1,maxSide/Math.max(w0,h0));
   const w=Math.max(1,Math.round(w0*k)),h=Math.max(1,Math.round(h0*k)),c=canvasOf(w,h),x=c.getContext('2d',{willReadFrequently:true});
   x.imageSmoothingQuality='high';x.drawImage(img,0,0,w,h);return {w,h,k:w/w0,d:x.getImageData(0,0,w,h).data};
@@ -3769,6 +3883,64 @@ function rpvDraw(){
   const up=()=>{rd=null;};$('#rpvFrame').addEventListener('pointerup',up);$('#rpvFrame').addEventListener('pointercancel',up);
   $('#rpvDone').onclick=closeRpv;$('#rpvReset').onclick=()=>rpv&&rpvReset();
   window.addEventListener('resize',()=>{if(rpv)rpvDraw();});
+}
+
+/* Generate Name: reads the title or logo in the poster and names the project after it.
+   Order: the words in the logo (read with text recognition where the browser can), then a text layer,
+   then the logo's file name, then any reference's or image's file name. */
+function niceName(t){
+  t=String(t||'').replace(/[\r\n]+/g,' ').replace(/[^\p{L}\p{N}&'’!.,:+\- ]+/gu,' ').replace(/\s+/g,' ').trim();
+  if(!t)return '';
+  if(t===t.toUpperCase()&&/[A-Z]/.test(t))t=t.toLowerCase().replace(/(^|[\s\-])(\p{L})/gu,(m,a,b)=>a+b.toUpperCase());   // PIZZAVILLE → Pizzaville
+  return t.slice(0,60);
+}
+function nameFromFile(n){
+  let t=String(n||'').replace(/\.[a-z0-9]+$/i,'').replace(/(-cutout|-painted)+$/i,'').replace(/[_\-.]+/g,' ');
+  t=t.replace(/\b(logo|logos|title|wordmark|final|copy|new|v\d+|\d{2,}|png|jpe?g|transparent|white|black|hi ?res|lowres|cutout|painted|asset|image|img|pasted|screenshot|screen shot|untitled|drawing|photo|dsc|scan|reference|ref|poster|banner|square|portrait|landscape)\b/gi,' ').replace(/\s+/g,' ').trim();
+  return niceName(t.replace(/(^|\s)(\p{L})/gu,(m,a,b)=>a+b.toUpperCase()));
+}
+let tessP=null;
+function loadTesseract(){
+  if(window.Tesseract)return Promise.resolve(window.Tesseract);
+  if(!tessP)tessP=new Promise((res,rej)=>{const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js';
+    s.onload=()=>window.Tesseract?res(window.Tesseract):rej(new Error('no OCR'));s.onerror=()=>rej(new Error('no OCR'));document.head.append(s);setTimeout(()=>rej(new Error('timeout')),15000);}).catch(e=>{tessP=null;throw e;});
+  return tessP;
+}
+// the image on a plain backdrop, upscaled for small logos, so the text is easy to read
+function ocrCanvas(img){const w=img.naturalWidth||img.width,h=img.naturalHeight||img.height,k=Math.min(3,Math.max(1,900/Math.max(w,h))),c=canvasOf(Math.round(w*k),Math.round(h*k)),x=c.getContext('2d');
+  // dark or light backdrop, whichever contrasts with the artwork
+  const s=imgPixels(img,64);let lum=0,n=0;for(let i=0;i<s.d.length;i+=4)if(s.d[i+3]>128){lum+=.3*s.d[i]+.59*s.d[i+1]+.11*s.d[i+2];n++;}
+  x.fillStyle=n&&lum/n>140?'#000':'#fff';x.fillRect(0,0,c.width,c.height);x.drawImage(img,0,0,c.width,c.height);return c;}
+async function readText(img){
+  // the browser's own text detector where there is one, otherwise text recognition loaded on demand
+  if('TextDetector' in window){try{const r=await new window.TextDetector().detect(ocrCanvas(img));if(r&&r.length){r.sort((a,b)=>b.boundingBox.height*b.boundingBox.width-a.boundingBox.height*a.boundingBox.width);const t=niceName(r[0].rawValue);if(t)return t;}}catch(e){}}
+  const T=await loadTesseract();
+  const res=await T.recognize(ocrCanvas(img),'eng');const lines=(res&&res.data&&res.data.lines)||[];
+  // the most prominent line: tallest letters, read confidently
+  const good=lines.map(l=>({t:niceName(l.text),h:l.bbox?l.bbox.y1-l.bbox.y0:0,c:l.confidence||0})).filter(l=>l.t.replace(/[^\p{L}]/gu,'').length>=2&&l.c>=55);
+  good.sort((a,b)=>b.h*b.c-a.h*a.c);return good.length?good[0].t:'';
+}
+async function generateName(){
+  const imgs=P.layers.filter(L=>isImg(L)&&!isStarter(L)),texts=P.layers.filter(L=>L.type==='text');
+  if(!imgs.length&&!texts.length)return toast('Import your logo or title first, then Generate Name reads it');
+  // which images most likely hold the title: the logo, then wide images with see-through backgrounds
+  const st=L=>assetOf(L).stats||{},score=L=>(L.category==='logo'?10:0)+(st(L).transparent>.05?3:0)+(st(L).aspect>1.6?2:0)+(/logo|title|name|wordmark/i.test(L.name)?4:0)-(isRef(L)?2:0)-(st(L).opaque>.97?3:0);
+  const cands=imgs.slice().sort((a,b)=>score(b)-score(a)).slice(0,3);
+  let name='',from='',noOCR=false;
+  // 1. the file name of the logo or title image (instant)
+  for(const L of cands.filter(L=>score(L)>0)){const t=nameFromFile(L.name);if(t){name=t;from=`the file name ${L.name}`;break;}}
+  // 2. a text layer
+  if(!name&&texts.length){const T=texts.slice().sort((a,b)=>assetOf(b).w*assetOf(b).h-assetOf(a).w*assetOf(a).h)[0];name=niceName(T.text.content);if(name)from='your text layer';}
+  // 3. read the words in the logo (needs to load text recognition the first time)
+  if(!name&&cands.length){busyStart('Generate Name','Reading the title in your poster…');
+    try{for(const L of cands){busyUpdate(null,`Reading ${L.name}`);
+        try{const t=await Promise.race([readText(getImg(assetOf(L).id)),new Promise((_,rj)=>setTimeout(()=>rj(new Error('timeout')),12000))]);if(t){name=t;from=`the text in ${L.name}`;break;}}catch(e){console.warn('text recognition unavailable',e);noOCR=true;break;}}}
+    finally{busyEnd();}}
+  // 4. any other image's file name
+  if(!name)for(const L of imgs){const t=nameFromFile(L.name);if(t){name=t;from=`the file name ${L.name}`;break;}}
+  if(!name)return toast(noOCR?'Couldn’t read the text in your logo here: reading text in images needs an internet connection, and isn’t available inside claude.ai. Add a text layer or type a name instead.':'Couldn’t find a title or logo to name the project after. Type a name instead.','error');
+  P.meta.name=name;$('#docname').value=name;markDirty();renderSaveState();
+  toast(`Named “${name}” from ${from}`,'ok');
 }
 
 /* =====================================================================
