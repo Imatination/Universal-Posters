@@ -38,7 +38,10 @@
 }
 *{box-sizing:border-box}
 [hidden]{display:none!important}
-html,body{height:100%}
+html,body{height:100%;touch-action:manipulation;overscroll-behavior:none}
+*{touch-action:manipulation}
+@media (pointer:coarse){input,select,textarea,.pastezone{font-size:16px!important}.layer .op input[type=number]{width:52px}}
+#view{touch-action:none!important}
 body{margin:0;background:var(--bg);color:var(--text);font:13px/1.35 var(--ui);overflow:hidden;-webkit-font-smoothing:antialiased}
 button,input,select{font:inherit;color:inherit}
 button{cursor:pointer}
@@ -575,6 +578,32 @@ function viewerMain(UP){
 /* =====================================================================
    2. APP STATE & UTILITIES
    ===================================================================== */
+/* Phones: stop the whole page zooming. Safari zooms on pinch, double-tap and when a small form field gets focus;
+   pinching on the poster zooms the canvas instead (see the canvas pointer handlers). */
+(function(){
+  const c='width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover';
+  let m=document.querySelector('meta[name="viewport"]');if(!m){m=document.createElement('meta');m.name='viewport';document.head.appendChild(m);}
+  m.setAttribute('content',c);
+  const vv=window.visualViewport,zoomed=()=>!!(vv&&vv.scale>1.01);
+  // If the page does end up zoomed, let the user pinch back out, and snap it back to 100% for them.
+  for(const t of ['gesturestart','gesturechange','gestureend'])document.addEventListener(t,e=>{if(!zoomed())e.preventDefault();},{passive:false});
+  document.addEventListener('touchmove',e=>{if(e.touches&&e.touches.length>1&&!zoomed())e.preventDefault();},{passive:false});
+  if(vv){let t=0;vv.addEventListener('resize',()=>{clearTimeout(t);t=setTimeout(()=>{if(zoomed()){m.setAttribute('content','width=device-width,initial-scale=1,maximum-scale=1.0001,user-scalable=no,viewport-fit=cover');
+    requestAnimationFrame(()=>m.setAttribute('content',c));}},350);});}
+  // Double-tap: iPhone Safari ignores most zoom settings, so a quick second tap is stopped here before it can zoom.
+  // A button tapped twice still gets its second click; the canvas handles its own double-tap (editing text).
+  let last={t:0,x:0,y:0};
+  document.addEventListener('touchend',e=>{
+    if(e.touches.length||!e.changedTouches.length)return;const tch=e.changedTouches[0],now=Date.now();
+    const dbl=now-last.t<350&&Math.hypot(tch.clientX-last.x,tch.clientY-last.y)<30;last={t:dbl?0:now,x:tch.clientX,y:tch.clientY};
+    if(!dbl)return;const tg=e.target;
+    const field=tg.closest&&tg.closest('input,textarea,select,[contenteditable="true"],.textedit');
+    if(field){e.preventDefault();if(document.activeElement!==field)field.focus({preventScroll:true});return;}
+    e.preventDefault();
+    if(tg.id==='view'){tg.dispatchEvent(new CustomEvent('doubletap',{detail:{x:tch.clientX,y:tch.clientY}}));return;}
+    const clickable=tg.closest&&tg.closest('button,a,label,[role="tab"],[role="menuitem"]');if(clickable)clickable.click();
+  },{passive:false});
+})();
 const E=UPEngine();
 const $=(s,r=document)=>r.querySelector(s);
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
@@ -599,6 +628,7 @@ function reduceRatio(w,h){w=Math.round(w);h=Math.round(h);const g=gcd(w,h)||1;re
 const fmt=(n,d=0)=>Number(n).toFixed(d);
 
 const ICONS={
+  alignBoth:'<rect x="4.5" y="4.5" width="7" height="7"/><path d="M8 1.5v13M1.5 8h13"/>',
   alignL:'<path d="M2.5 2v12"/><rect x="5" y="4" width="8" height="3"/><rect x="5" y="9" width="5" height="3"/>',
   alignC:'<path d="M8 2v12"/><rect x="3.5" y="4" width="9" height="3"/><rect x="5" y="9" width="6" height="3"/>',
   alignR:'<path d="M13.5 2v12"/><rect x="3" y="4" width="8" height="3"/><rect x="6" y="9" width="5" height="3"/>',
@@ -867,12 +897,12 @@ function clampPan(){
   const mx=Math.max(0,(w+SW)/2-m),my=Math.max(0,(h+SH)/2-m);   // keep at least a sliver of the poster on screen
   viewPan.x=clamp(viewPan.x,-mx,mx);viewPan.y=clamp(viewPan.y,-my,my);
 }
-function setZoom(z,sx=SW/2,sy=SH/2){
+function setZoom(z,sx=SW/2,sy=SH/2,quiet){
   if(textEdit)finishTextEdit();
   z=clamp(z,ZMIN,ZMAX);const A=aspectOf(P.activeRatio),f=fitRect(A),cx=SW/2,cy=SH/2,F=frameRect(A);
   const u=(sx-F.x)/F.w,v=(sy-F.y)/F.h;   // keep the point under the pointer still
   viewPan.x=sx-u*f.w*z-(cx-(cx-f.x)*z);viewPan.y=sy-v*f.h*z-(cy-(cy-f.y)*z);viewZoom=z;
-  clampPan();requestDraw();renderOptbar();renderStatus();
+  clampPan();requestDraw();if(!quiet){renderOptbar();renderStatus();}
 }
 const ZSTEPS=[.1,.15,.25,.33,.5,.67,.75,1,1.25,1.5,2,3,4,6,8];
 function zoomStep(dir,sx,sy){const z=dir>0?ZSTEPS.find(s=>s>viewZoom+1e-3)||ZMAX:[...ZSTEPS].reverse().find(s=>s<viewZoom-1e-3)||ZMIN;setZoom(z,sx,sy);}
@@ -965,7 +995,15 @@ function hitHandle(x,y){
 function toFrame(e){const r=cv.getBoundingClientRect();return {x:e.clientX-r.left-curFrame.x,y:e.clientY-r.top-curFrame.y};}
 
 let drag=null;
+/* Two fingers on the canvas: pinch to zoom, drag to move the view. Any move a first finger had started is undone. */
+const touchPts=new Map();let pinch=null,pinchHold=false;
+function pinchMid(){const v=[...touchPts.values()];return {x:(v[0].x+v[1].x)/2,y:(v[0].y+v[1].y)/2,d:Math.hypot(v[0].x-v[1].x,v[0].y-v[1].y)};}
 cv.addEventListener('pointerdown',e=>{
+  if(e.pointerType==='touch'){touchPts.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    if(touchPts.size===2&&!previewMode){
+      if(drag){if(drag.moved){restoreSnap(drag.before);refreshAll();}drag=null;guides=[];}panDrag=null;
+      const r=cv.getBoundingClientRect(),m=pinchMid();pinch={d0:Math.max(1,m.d),z0:viewZoom,mx:m.x-r.left,my:m.y-r.top,last:{x:m.x,y:m.y}};pinchHold=true;cv.setPointerCapture(e.pointerId);return;}
+    if(touchPts.size>2||pinchHold)return;}
   if(previewMode)return; closeMenus();
   // Hand tool, Space held, or the middle mouse button: drag to move the view
   if(handActive()||e.button===1){e.preventDefault();panDrag={x:e.clientX,y:e.clientY,px:viewPan.x,py:viewPan.y};cv.style.cursor='grabbing';cv.setPointerCapture(e.pointerId);return;}
@@ -995,6 +1033,11 @@ function beginDrag(type,p,e,i){
   for(const id of ids){const L=layerBy(id);drag.pls[id]={...E.effective(P,L,P.activeRatio)};drag.boxes[id]=boxOf(L,drag.pls[id]);}
 }
 cv.addEventListener('pointermove',e=>{
+  if(e.pointerType==='touch'&&touchPts.has(e.pointerId)){touchPts.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    if(pinch&&touchPts.size>=2){const r=cv.getBoundingClientRect(),m=pinchMid();
+      viewPan.x+=m.x-pinch.last.x;viewPan.y+=m.y-pinch.last.y;pinch.last={x:m.x,y:m.y};
+      setZoom(pinch.z0*m.d/pinch.d0,m.x-r.left,m.y-r.top,true);return;}
+    if(pinchHold)return;}
   if(panDrag){if(Math.hypot(e.clientX-panDrag.x,e.clientY-panDrag.y)>2)panDrag.moved=true;viewPan.x=panDrag.px+e.clientX-panDrag.x;viewPan.y=panDrag.py+e.clientY-panDrag.y;clampPan();requestDraw();return;}
   if(handActive()&&!drag){cv.style.cursor='grab';return;}
   const p=toFrame(e);
@@ -1080,10 +1123,16 @@ cv.addEventListener('wheel',e=>{
   if(e.altKey||e.ctrlKey||e.metaKey){const dy=e.deltaY||e.deltaX;setZoom(viewZoom*Math.exp(-dy*(e.deltaMode===1?.06:.0025)),e.clientX-r.left,e.clientY-r.top);return;}
   viewPan.x-=e.shiftKey&&!e.deltaX?e.deltaY:e.deltaX;viewPan.y-=e.shiftKey&&!e.deltaX?0:e.deltaY;clampPan();requestDraw();
 },{passive:false});
-cv.addEventListener('pointerup',endDrag);cv.addEventListener('pointercancel',endDrag);
+function touchEnd(e){if(e.pointerType!=='touch')return false;touchPts.delete(e.pointerId);
+  if(pinch&&touchPts.size<2){pinch=null;renderOptbar();renderStatus();}
+  if(!touchPts.size&&pinchHold){pinchHold=false;return true;}
+  return pinchHold;}
+cv.addEventListener('pointerup',e=>{if(touchEnd(e))return;endDrag(e);});cv.addEventListener('pointercancel',e=>{if(touchEnd(e))return;endDrag(e);});
 cv.addEventListener('pointerleave',()=>{if(hoverId&&!drag){hoverId=null;requestDraw();}});
-cv.addEventListener('dblclick',e=>{const p=toFrame(e);const L=hitLayer(p.x,p.y);if(!L)return;sel=new Set([L.id]);refreshSelection();
-  if(L.type==='text'){startTextEdit(L);return;}const inp=$('#pf-ax');inp&&inp.focus();});
+function onDoubleTap(clientX,clientY){const p=toFrame({clientX,clientY});const L=hitLayer(p.x,p.y);if(!L)return;sel=new Set([L.id]);refreshSelection();
+  if(L.type==='text'){startTextEdit(L);return;}const inp=$('#pf-ax');if(inp&&matchMedia('(pointer:fine)').matches)inp.focus();}
+cv.addEventListener('dblclick',e=>onDoubleTap(e.clientX,e.clientY));
+cv.addEventListener('doubletap',e=>onDoubleTap(e.detail.x,e.detail.y));
 
 /* Typing on the canvas: double-click a text layer (or add one) and type straight onto the poster.
    While typing, the layer is drawn by an editable box in the same font, colour and stroke; Esc, Ctrl/⌘+Enter
@@ -1104,10 +1153,13 @@ function startTextEdit(L,selectAll){
     const asc=Math.max(...mets.map(x=>x.actualBoundingBoxAscent||240)),desc=Math.max(...mets.map(x=>x.actualBoundingBoxDescent||64));
     const w0=Math.max(...mets.map(x=>(x.actualBoundingBoxLeft||0)+(x.actualBoundingBoxRight||x.width)))+pad0*2,h0=asc+desc+320*1.18*(lines.length-1)+pad0*2;
     const nb=E.box(L,{w:w0,h:h0},E.effective(P,L,P.activeRatio),curFrame.w,curFrame.h),kk=nb.w/w0,fz=320*kk;
-    ta.style.font=`${t.italic?'italic ':''}${t.bold?700:400} ${fz}px ${fontStack(t.font)}`;ta.style.lineHeight=(1.18*fz)+'px';
-    ta.style.paddingTop=Math.max(0,(pad0+asc)*kk-0.86*1.18*fz/1.18)+'px';
-    if(t.stroke)ta.style.webkitTextStroke=`${2*sw0*kk}px ${t.strokeColor}`;
-    ta.style.width=nb.w+'px';ta.style.height=nb.h+'px';ta.style.left=(curFrame.x+nb.x)+'px';ta.style.top=(curFrame.y+nb.y)+'px';ta.style.transform=`rotate(${nb.rot||0}deg)`;};
+    // Safari zooms into text boxes under 16px, so the box always uses at least 16px text and is scaled down to the real size
+    const rf=Math.max(16,fz),sc=fz/rf,u=1/sc;
+    ta.style.font=`${t.italic?'italic ':''}${t.bold?700:400} ${rf}px ${fontStack(t.font)}`;ta.style.lineHeight=(1.18*rf)+'px';
+    ta.style.paddingTop=Math.max(0,(pad0+asc)*kk-0.86*fz)*u+'px';
+    if(t.stroke)ta.style.webkitTextStroke=`${2*sw0*kk*u}px ${t.strokeColor}`;
+    const cx=curFrame.x+nb.x+nb.w/2,cy=curFrame.y+nb.y+nb.h/2,w=nb.w*u,h=nb.h*u;
+    ta.style.width=w+'px';ta.style.height=h+'px';ta.style.left=(cx-w/2)+'px';ta.style.top=(cy-h/2)+'px';ta.style.transform=`rotate(${nb.rot||0}deg) scale(${sc})`;};
   ta.addEventListener('input',fit);
   ta.addEventListener('keydown',e=>{e.stopPropagation();if(e.key==='Escape'||(e.key==='Enter'&&(e.ctrlKey||e.metaKey))){e.preventDefault();finishTextEdit();}});
   ta.addEventListener('blur',()=>finishTextEdit());
@@ -1149,16 +1201,17 @@ function align(op){
   const W=curFrame.w,H=curFrame.h;
   // Backgrounds always fill the canvas, so they align to the canvas: the image's own edge or centre lines up with
   // the canvas edge or centre along whichever direction the image overflows.
-  const BG={left:['ax',0],center:['ax',.5],right:['ax',1],top:['ay',0],middle:['ay',.5],bottom:['ay',1]}[op];
+  const BGS={left:[['ax',0]],center:[['ax',.5]],right:[['ax',1]],top:[['ay',0]],middle:[['ay',.5]],bottom:[['ay',1]],both:[['ax',.5],['ay',.5]]}[op],BG=BGS&&BGS[0];
   if(!Ls.length){
     if(!BG)return toast('Distribute needs logos or assets. Backgrounds always fill the canvas.');
-    edit(()=>{for(const L of bgs){const pl={...E.effective(P,L,P.activeRatio)};pl[BG[0]]=BG[1];writePl(L.id,pl);}});notifyDropped();
+    edit(()=>{for(const L of bgs){const pl={...E.effective(P,L,P.activeRatio)};for(const [k,v] of BGS)pl[k]=v;writePl(L.id,pl);}});notifyDropped();
+    if(op==='both')return;
     const b=boxOf(bgs[0]),spare=BG[0]==='ax'?b.w-W:b.h-H;
     if(spare<1)toast(`This background exactly fills the ${BG[0]==='ax'?'width':'height'} at this zoom, so there's no room to move it ${BG[0]==='ax'?'sideways':'up or down'}. Zoom it in first.`);
     return;
   }
   edit(()=>{
-    if(BG)for(const L of bgs){const pl={...E.effective(P,L,P.activeRatio)};pl[BG[0]]=BG[1];writePl(L.id,pl);}
+    if(BGS)for(const L of bgs){const pl={...E.effective(P,L,P.activeRatio)};for(const [k,v] of BGS)pl[k]=v;writePl(L.id,pl);}
     const items=Ls.map(L=>{const pl=E.effective(P,L,P.activeRatio);return {L,pl,b:boxOf(L,pl)};});
     const toCanvas=alignToCanvas||items.length===1;
     let x0=0,y0=0,x1=W,y1=H;
@@ -1170,10 +1223,10 @@ function align(op){
       let pos=(hz?x0:y0)+(toCanvas?gap:0);
       for(const i of items){if(hz)i.b.x=pos;else i.b.y=pos;pos+=(hz?i.b.w:i.b.h)+gap;}
     }else for(const i of items){const b=i.b;
-      if(op==='left')b.x=x0;if(op==='center')b.x=(x0+x1)/2-b.w/2;if(op==='right')b.x=x1-b.w;
+      if(op==='left')b.x=x0;if(op==='center'||op==='both')b.x=(x0+x1)/2-b.w/2;if(op==='both')b.y=(y0+y1)/2-b.h/2;if(op==='right')b.x=x1-b.w;
       if(op==='top')b.y=y0;if(op==='middle')b.y=(y0+y1)/2-b.h/2;if(op==='bottom')b.y=y1-b.h;}
     for(const i of items){const pl=E.fromBox(i.L,assetOf(i.L),i.b,W,H,i.pl);
-      if(toCanvas){if(op==='left')pl.ax=0;if(op==='center')pl.ax=.5;if(op==='right')pl.ax=1;if(op==='top')pl.ay=0;if(op==='middle')pl.ay=.5;if(op==='bottom')pl.ay=1;}
+      if(toCanvas){if(op==='both'){pl.ax=.5;pl.ay=.5;}if(op==='left')pl.ax=0;if(op==='center')pl.ax=.5;if(op==='right')pl.ax=1;if(op==='top')pl.ay=0;if(op==='middle')pl.ay=.5;if(op==='bottom')pl.ay=1;}
       writePl(i.L.id,pl);}
   });
   notifyDropped();
@@ -1187,6 +1240,20 @@ function setCategory(L,cat){
     if(cat==='reference'){const i=P.layers.indexOf(L);P.layers.splice(i,1);P.layers.push(L);}
     if(cat==='background'){const i=P.layers.indexOf(L);P.layers.splice(i,1);const j=P.layers.findIndex(x=>!isBg(x));P.layers.splice(j<0?P.layers.length:j,0,L);}
   });
+}
+/* Scale to fit: the whole asset (rotation included) just fits inside this layout, kept where it is as far as possible.
+   Scale to fill: the asset just covers the whole layout, centred. Proportions are kept in both cases. */
+function scaleToCanvas(L,mode){
+  edit(()=>{
+    const W=curFrame.w,H=curFrame.h,pl={...E.effective(P,L,P.activeRatio)},b=boxOf(L,pl),r=(b.rot||0)*Math.PI/180,c=Math.abs(Math.cos(r)),sn=Math.abs(Math.sin(r));
+    const bw=b.w*c+b.h*sn,bh=b.w*sn+b.h*c,k=mode==='fit'?Math.min(W/bw,H/bh):Math.max(W/bw,H/bh),nw=b.w*k,nh=b.h*k,aw=bw*k,ah=bh*k;
+    let cx=b.x+b.w/2,cy=b.y+b.h/2;
+    if(mode==='fit'){cx=clamp(cx,aw/2,W-aw/2);cy=clamp(cy,ah/2,H-ah/2);}else{cx=W/2;cy=H/2;}
+    const nb={x:cx-nw/2,y:cy-nh/2,w:nw,h:nh,rot:b.rot||0},q=E.fromBox(L,assetOf(L),nb,W,H,pl);
+    if(mode==='fill')q.free=true;else delete q.free;
+    writePl(L.id,q);
+  });
+  notifyDropped();toast(mode==='fit'?`${L.name} scaled to fit ${ratioBy(P.activeRatio).name}`:`${L.name} scaled to fill ${ratioBy(P.activeRatio).name}`,'ok');
 }
 function deleteSelected(){
   if(!sel.size)return;const n=sel.size;
@@ -1402,6 +1469,7 @@ function menuDefs(){
       {label:'Send to Back',sc:'Shift+[',dis:!has,act:()=>arrange('back')},
       {hd:'Align'},
       {label:'Align to Canvas',check:alignToCanvas||!multi,dis:!multi,act:()=>{alignToCanvas=!alignToCanvas;toast(alignToCanvas?'Aligning to the canvas':'Aligning selected layers to each other');}},
+      {label:'Both Centres',dis:!has,act:()=>align('both')},
       {label:'Left Edges',dis:!has,act:()=>align('left')},{label:'Horizontal Centres',dis:!has,act:()=>align('center')},{label:'Right Edges',dis:!has,act:()=>align('right')},
       {label:'Top Edges',dis:!has,act:()=>align('top')},{label:'Vertical Centres',dis:!has,act:()=>align('middle')},{label:'Bottom Edges',dis:!has,act:()=>align('bottom')},
       {label:'Distribute Horizontally',dis:!has,act:()=>align('distH')},{label:'Distribute Vertically',dis:!has,act:()=>align('distV')},
@@ -1482,7 +1550,7 @@ function renderOptbar(){
     ib('reset','Reset selected layers to the shared layout in this layout',resetLayerOverride,!has||![...sel].some(id=>E.hasOverride(P,id,rk))),
     ib('resetAll','Reset this whole layout to the shared layout',()=>resetLayout(),!ovCount(rk)),
     el('span',{class:'vsep'}),
-    el('div',{class:'grp'},ib('alignL','Align left',()=>align('left'),!has),ib('alignC','Align horizontal centres',()=>align('center'),!has),ib('alignR','Align right',()=>align('right'),!has),
+    el('div',{class:'grp'},ib('alignBoth','Align vertical and horizontal centres',()=>align('both'),!has),ib('alignL','Align left',()=>align('left'),!has),ib('alignC','Align horizontal centres',()=>align('center'),!has),ib('alignR','Align right',()=>align('right'),!has),
       ib('alignT','Align top',()=>align('top'),!has),ib('alignM','Align vertical centres',()=>align('middle'),!has),ib('alignB','Align bottom',()=>align('bottom'),!has),
       ib('distH','Distribute horizontally',()=>align('distH'),!has),ib('distV','Distribute vertically',()=>align('distV'),!has)),
     el('span',{class:'vsep'}),
@@ -1606,6 +1674,9 @@ function renderProps(){
         el('button',{class:'btn small',title:'Straighten (0°)',onclick:()=>apply(p=>p.rot=0),text:'0°'}))));
       body.append(el('p',{class:'hint',text:'You can also rotate on the canvas: drag just outside any corner, or the round handle above the box. Hold Shift to snap to 15°.'}));
     }
+    if(!isBg(L))body.append(el('div',{class:'prow'},el('span',{class:'k',text:'Scale'}),el('div',{class:'pair'},
+      el('button',{class:'btn small',title:'Largest size that shows all of it inside the poster',onclick:()=>scaleToCanvas(L,'fit'),text:'Scale to fit'}),
+      el('button',{class:'btn small',title:'Smallest size that covers the whole poster',onclick:()=>scaleToCanvas(L,'fill'),text:'Scale to fill'}))));
     body.append(el('div',{class:'prow'},el('span',{class:'k',text:'Grid area'}),el('span',{class:'v',text:E.gridCell(b,curFrame.w,curFrame.h)})));
     if(!isBg(L)){
       const tog=(key,label,hint)=>{const i=el('input',{type:'checkbox',role:'switch',checked:!!UI[key]});i.addEventListener('change',()=>{UI[key]=i.checked;saveUI();});
@@ -1663,7 +1734,8 @@ function renderEmpty(){
   e.append(el('div',{class:'card'},el('h2',{text:'Start your poster'}),
     el('p',{text:'Import your background, logo and supporting images. Add reference posters if you want Automate to follow an existing design.'}),
     el('div',{class:'row'},el('button',{class:'btn primary',onclick:importAssetsFlow,text:'Import assets'}),el('button',{class:'btn',onclick:importRefsFlow,text:'Import references'})),
-    el('button',{class:'btn ghost small',onclick:()=>loadSample(),text:'Open the sample project'})));
+    el('div',{class:'row'},el('button',{class:'btn ghost small',onclick:openFlow,text:'Open a saved project'}),el('button',{class:'btn ghost small',onclick:()=>loadSample(),text:'Open the sample project'})),
+    resumable?el('button',{class:'btn small',onclick:resumeSession,title:`Autosaved in this browser ${new Date(resumable.at).toLocaleString()}`,text:`Resume “${resumable.obj.meta.name}”`}):null));
 }
 /* Collapsible UI: option bar, layout tabs, layers and properties. Remembered in this browser. */
 const UI={notools:false,notabs:false,dockCollapsed:false,pane:'layers',layersCollapsed:false,propsCollapsed:false,scaleProp:true,scaleCenter:false,snap:true};
@@ -2731,16 +2803,17 @@ async function newDocument(){
   if(previewMode)setPreviewMode(false);refreshAll();renderSaveState();
   newProjectModal();
 }
+/* No start-up prompt: the app opens on an empty poster. The empty canvas offers the same starting points
+   (import, references, sample, open, and resuming the last autosaved session). */
+let resumable=null;
 async function newProjectModal(){
-  let saved=null;try{saved=await idbGet('autosave');}catch(e){}
-  const choices=el('div',{class:'choices'});
-  const m=modal({title:'New poster',body:[el('p',{text:'Your canvas starts as a Square (1:1). Do you have reference posters to import? Universal Posters matches the canvas to them and uses them to guide Automate. They sit at 50% opacity and stay out of exports.'}),choices],actions:[]});
-  const ch=(cls,title,sub,fn)=>choices.append(el('button',{class:'choice '+cls,onclick:()=>{m.close();fn();}},el('b',{text:title}),el('small',{text:sub})));
-  ch('primary','Import reference posters…','Pick one or more images of the poster you want to adapt',importRefsFlow);
-  ch('','Skip and start designing','Begin with an empty Square canvas',()=>{});
-  ch('','Open the sample project','A night-market poster with two references, already automated',()=>loadSample());
-  ch('','Open a saved project…','A .poster.html document or a project package .zip',openFlow);
-  if(saved&&saved.obj&&saved.obj.layers&&saved.obj.layers.length)ch('',`Resume “${saved.obj.meta.name}”`,`Autosaved in this browser ${new Date(saved.at).toLocaleString()}`,async()=>{try{await loadProjectObject(saved.obj);dirty=true;renderSaveState();toast('Resumed your last session','ok');}catch(e){toast(e.message,'error');}});
+  resumable=null;try{const saved=await idbGet('autosave');if(saved&&saved.obj&&saved.obj.layers&&saved.obj.layers.length)resumable=saved;}catch(e){}
+  renderEmpty();
+}
+async function resumeSession(){
+  if(!resumable)return;const saved=resumable;
+  try{busyStart('Opening your last session…',saved.obj.meta.name);await loadProjectObject(saved.obj);dirty=true;renderSaveState();toast('Resumed your last session','ok');}
+  catch(e){toast(e.message,'error');}finally{busyEnd();}
 }
 async function loadSample(){
   toast('Building the sample poster and running Automate…');
