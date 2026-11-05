@@ -199,6 +199,8 @@ img,canvas{-webkit-touch-callout:none;-webkit-user-drag:none}
 .gridpick.six button{border-radius:1px;border-color:var(--line)}
 .gridpick.six button.l{margin-left:2px}.gridpick.six button.t{margin-top:2px}
 .gridwrap{display:grid;gap:6px;justify-items:start}
+.gridpick.off{opacity:.55}
+.btn.small.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
 .gridwrap .k2{font-size:11px;color:var(--faint)}
 .seg.small button{padding:3px 8px;font-size:11.5px}
 .seg.scales{flex-wrap:wrap;max-width:100%}
@@ -512,7 +514,9 @@ function UPEngine(){
       var c=pl.cell,N=c.n||3,X0=c.c0/N*W,X1=(c.c1+1)/N*W,Y0=c.r0/N*H,Y1=(c.r1+1)/N*H,rr2=(pl.rot||0)*Math.PI/180,c2=Math.abs(Math.cos(rr2)),s2=Math.abs(Math.sin(rr2));
       var bw2=w*c2+h*s2,bh2=w*s2+h*c2,kw=(X1-X0)/bw2,kh=(Y1-Y0)/bh2,m=c.k||'fit';
       // scale presets inside the area: fit, fill, match width, match height, or a share of the fitted size
-      var k2=m==='fill'?Math.max(kw,kh):m==='w'?kw:m==='h'?kh:typeof m==='number'?Math.min(kw,kh)*m:Math.min(kw,kh);w*=k2;h*=k2;
+      if(c.st){   // placed with Scale proportionally off: stretched to the area's own shape
+        var f2=typeof m==='number'?m:1;w=(X1-X0)*f2;h=(Y1-Y0)*f2;
+      }else{var k2=m==='fill'?Math.max(kw,kh):m==='w'?kw:m==='h'?kh:typeof m==='number'?Math.min(kw,kh)*m:Math.min(kw,kh);w*=k2;h*=k2;}
       return {x:(X0+X1)/2-w/2,y:(Y0+Y1)/2-h/2,w:w,h:h,rot:pl.rot||0};
     }
     // dx, dy: how far past the edges (as a fraction of the canvas width / height) it was dragged, so assets can
@@ -1442,7 +1446,7 @@ function scaleToCanvas(L,mode){
   if(isBg(L))roleChange(L,'background');
   edit(()=>{
     const W=curFrame.w,H=curFrame.h,pl={...E.effective(P,L,P.activeRatio)};
-    const q={...pl,fit:mode,ar:pl.ar||1};delete q.free;delete q.dx;delete q.dy;delete q.span;delete q.snapX;delete q.snapY;
+    const q={...pl,fit:mode,ar:pl.ar||1};delete q.cell;delete q.free;delete q.dx;delete q.dy;delete q.span;delete q.snapX;delete q.snapY;
     if(mode==='fill'){q.ax=.5;q.ay=.5;}else{q.ax=clamp(pl.ax,0,1);q.ay=clamp(pl.ay,0,1);}
     const b=E.box(L,assetOf(L),q,W,H);q.s=Math.sqrt(b.w*b.h/(W*H));   // size here, kept for reference
     writePl(L.id,q);
@@ -1875,13 +1879,13 @@ function gridPicker(L,pl,b){
   for(let r=0;r<N;r++)for(let c=0;c<N;c++){const nm=cellName({n:N,c0:c,c1:c,r0:r,r1:r}),bt=el('button',{type:'button','data-c':c,'data-r':r,title:nm,'aria-label':nm});
     if(N===6){if(c%2===0&&c)bt.classList.add('l');if(r%2===0&&r)bt.classList.add('t');}cells.push(bt);g.append(bt);}
   const paint=(sel,cl)=>cells.forEach(bt=>{const c=+bt.dataset.c,r=+bt.dataset.r,on=sel&&c>=sel.c0&&c<=sel.c1&&r>=sel.r0&&r<=sel.r1;bt.classList.toggle(cl,!!on);});
-  paint(cur,cur.soft?'cur':'sel');
+  if(!pl.fit)paint(cur,cur.soft?'cur':'sel');else g.classList.add('off');
   let st=null;const at=e=>{const t=document.elementFromPoint(e.clientX,e.clientY);return t&&t.parentNode===g&&t.dataset.c!=null?t:null;};
   const area=(a,z)=>({n:N,k,c0:Math.min(+a.dataset.c,+z.dataset.c),c1:Math.max(+a.dataset.c,+z.dataset.c),r0:Math.min(+a.dataset.r,+z.dataset.r),r1:Math.max(+a.dataset.r,+z.dataset.r)});
   g.addEventListener('pointerdown',e=>{const t=at(e);if(!t)return;e.preventDefault();g.setPointerCapture(e.pointerId);st=t;paint(area(t,t),'sel');});
   g.addEventListener('pointermove',e=>{if(!st)return;const t=at(e);if(t)paint(area(st,t),'sel');});
   g.addEventListener('pointerup',e=>{if(!st)return;const t=at(e)||st,a=area(st,t);st=null;placeInCell(L,a);});
-  g.addEventListener('pointercancel',()=>{st=null;paint(cur,cur.soft?'cur':'sel');});
+  g.addEventListener('pointercancel',()=>{st=null;paint(pl.fit?null:cur,cur.soft?'cur':'sel');paint(null,'sel');if(!pl.fit)paint(cur,cur.soft?'cur':'sel');});
   // scale presets inside the chosen area
   const tips={fit:'Largest size that fits inside the area',fill:'Covers the whole area (may spill past it)',w:'As wide as the area',h:'As tall as the area'};
   const sseg=el('div',{class:'seg small scales',role:'group','aria-label':'Scale in the grid area'},
@@ -1892,7 +1896,7 @@ function gridPicker(L,pl,b){
 }
 function placeInCell(L,cell){
   if(isBg(L))roleChange(L,'background');
-  edit(()=>{const pl={...E.effective(P,L,P.activeRatio),cell};delete pl.fit;delete pl.free;delete pl.dx;delete pl.dy;if(!cell.n)cell.n=3;if(!cell.k)cell.k='fit';
+  edit(()=>{const pl={...E.effective(P,L,P.activeRatio),cell};delete pl.fit;delete pl.free;delete pl.dx;delete pl.dy;if(!cell.n)cell.n=3;if(!cell.k)cell.k='fit';if(UI.scaleProp===false)cell.st=1;else delete cell.st;
     const W=curFrame.w,H=curFrame.h,bx=E.box(L,assetOf(L),pl,W,H);pl.s=Math.sqrt(bx.w*bx.h/(W*H));writePl(L.id,pl);});
   toast(`${L.name} placed in ${cellName(cell).replace(/^[A-Z]/,m=>m.toLowerCase())} (${(CELL_SCALES.find(x=>x[0]===cell.k)||[0,'Fit'])[1].toLowerCase()}) ${isLinked(L.id)?'in every aspect ratio':'in '+ratioBy(P.activeRatio).name}`,'ok');
 }
@@ -1936,10 +1940,10 @@ function renderProps(){
         el('button',{class:'btn small',title:'Straighten (0°)',onclick:()=>apply(p=>p.rot=0),text:'0°'}))));
       body.append(el('p',{class:'hint',text:'You can also rotate on the canvas: drag just outside any corner, or the round handle above the box. Hold Shift to snap to 15°.'}));
     }
-    body.append(el('div',{class:'prow'},el('span',{class:'k',text:'Grid area'}),el('div',{class:'gridrow'},el('span',{class:'v',text:pl.cell?cellName(pl.cell):E.gridCell(b,curFrame.w,curFrame.h)}),gridPicker(L,pl,b),el('small',{class:'hint',text:'Tap a cell, or drag across several, to place the asset there.'}))));
-    if(!isRef(L))body.append(el('div',{class:'prow'},el('span',{class:'k',text:'Scale'}),el('div',{class:'pair'},
-      el('button',{class:'btn small',title:'Largest size that shows all of it inside the poster',onclick:()=>scaleToCanvas(L,'fit'),text:'Scale to fit'}),
-      el('button',{class:'btn small',title:'Smallest size that covers the whole poster',onclick:()=>scaleToCanvas(L,'fill'),text:'Scale to fill'}))));
+    body.append(el('div',{class:'prow'},el('span',{class:'k',text:'Grid area'}),el('div',{class:'gridrow'},el('span',{class:'v',text:pl.fit==='fill'?'Filled to canvas':pl.fit==='fit'?'Fitted to canvas':pl.cell?cellName(pl.cell)+(pl.cell.st?' (stretched)':''):E.gridCell(b,curFrame.w,curFrame.h)}),gridPicker(L,pl,b),el('small',{class:'hint',text:'Tap a cell, or drag across several, to place the asset there.'}))));
+    if(!isRef(L))body.append(el('div',{class:'prow'},el('span',{class:'k',text:'Scale To Canvas'}),el('div',{class:'pair'},
+      el('button',{class:'btn small'+(pl.fit==='fit'?' on':''),'aria-pressed':String(pl.fit==='fit'),title:'Largest size that shows all of it inside the poster',onclick:()=>scaleToCanvas(L,'fit'),text:'Scale to fit'}),
+      el('button',{class:'btn small'+(pl.fit==='fill'?' on':''),'aria-pressed':String(pl.fit==='fill'),title:'Smallest size that covers the whole poster',onclick:()=>scaleToCanvas(L,'fill'),text:'Scale to fill'}))));
     if(!isBg(L)){
       const tog=(key,label,hint)=>{const i=el('input',{type:'checkbox',role:'switch',checked:!!UI[key]});i.addEventListener('change',()=>{UI[key]=i.checked;saveUI();});
         return el('label',{class:'switch',title:hint},i,el('span',{class:'track','aria-hidden':'true'}),el('span',{text:label}));};
