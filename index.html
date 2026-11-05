@@ -136,6 +136,19 @@ button{cursor:pointer}
 #empty h2{margin:0;font-size:16px;font-weight:600;text-wrap:balance}
 #empty p{margin:0;color:var(--muted);font-size:12.5px;text-wrap:pretty}
 #empty .row{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+#rpv{position:absolute;inset:0;z-index:6;display:grid;grid-template-rows:auto 1fr auto;background:var(--paste)}
+.rpv-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:8px max(16px,env(safe-area-inset-left,0px));border-bottom:1px solid var(--line);background:var(--chrome)}
+.rpv-bar b{font-weight:600}#rpvInfo{color:var(--muted);font-size:12px;font-family:var(--mono,ui-monospace,monospace)}
+.rpv-area{position:relative;min-height:0;overflow:hidden;touch-action:none}
+.rpv-frame{position:absolute;outline:1px dashed var(--line-2);background:rgba(255,255,255,.03)}
+.rpv-frame canvas{position:absolute;display:block;box-shadow:0 6px 26px rgba(0,0,0,.55);background-color:#fff;background-image:linear-gradient(45deg,#d9d9d9 25%,transparent 25%,transparent 75%,#d9d9d9 75%),linear-gradient(45deg,#d9d9d9 25%,transparent 25%,transparent 75%,#d9d9d9 75%);background-size:16px 16px;background-position:0 0,8px 8px}
+.rh{position:absolute;touch-action:none;z-index:2}
+.rh.r,.rh.l{top:0;bottom:0;width:18px;cursor:ew-resize}.rh.r{right:-9px}.rh.l{left:-9px}
+.rh.b,.rh.t{left:0;right:0;height:18px;cursor:ns-resize}.rh.b{bottom:-9px}.rh.t{top:-9px}
+.rh.rb{right:-12px;bottom:-12px;width:24px;height:24px;cursor:nwse-resize;border-radius:50%;background:var(--accent);box-shadow:0 0 0 2px var(--chrome)}
+.rh.r::after,.rh.l::after{content:"";position:absolute;top:50%;left:7px;width:4px;height:36px;margin-top:-18px;border-radius:2px;background:var(--accent)}
+.rh.b::after,.rh.t::after{content:"";position:absolute;left:50%;top:7px;height:4px;width:36px;margin-left:-18px;border-radius:2px;background:var(--accent)}
+.rpv-tip{margin:0;padding:8px max(16px,env(safe-area-inset-left,0px));color:var(--faint);font-size:12px}
 #previews{position:absolute;inset:0;overflow:auto;padding:18px max(16px,env(safe-area-inset-left,0px)) 24px;background:var(--paste)}
 #previews .head{display:flex;align-items:baseline;gap:12px;margin-bottom:14px;flex-wrap:wrap}
 #previews .head h2{margin:0;font-size:15px;font-weight:600}
@@ -161,7 +174,7 @@ button{cursor:pointer}
 .pnl-h .count{font:11px var(--mono);color:var(--faint)}
 .pnl-h .sp{flex:1}
 #layers{list-style:none;margin:0;padding:4px;overflow:auto;min-height:60px}
-.layer{display:grid;grid-template-columns:24px 24px 40px minmax(0,1fr);grid-template-areas:"eye lock thumb name" "eye lock thumb op";column-gap:7px;row-gap:3px;align-items:center;padding:6px 6px 6px 4px;border-radius:6px;border:1px solid transparent;margin-bottom:2px;cursor:default}
+.layer{display:grid;grid-template-columns:24px 24px 24px 40px minmax(0,1fr);grid-template-areas:"eye lock link thumb name" "eye lock link thumb op";column-gap:7px;row-gap:3px;align-items:center;padding:6px 6px 6px 4px;border-radius:6px;border:1px solid transparent;margin-bottom:2px;cursor:default}
 .layer:hover{background:var(--panel-2)}
 .layer[aria-selected="true"]{background:#24332b;border-color:#3b5a46}
 .layer.ref{background-image:repeating-linear-gradient(135deg,transparent 0 7px,rgba(255,255,255,.025) 7px 14px)}
@@ -170,6 +183,26 @@ button{cursor:pointer}
 .layer .lock{grid-area:lock;width:24px;height:24px;display:grid;place-items:center;background:none;border:0;border-radius:4px;color:var(--faint)}
 .layer .lock:hover{background:var(--line);color:var(--muted)}
 .layer .lock.on{color:var(--accent)}
+.layer .link{grid-area:link;width:24px;height:24px;display:grid;place-items:center;background:none;border:0;border-radius:4px;color:var(--faint)}
+.layer .link:hover{background:var(--line);color:var(--muted)}
+.layer .link.on{color:var(--accent)}
+/* no press-and-hold text selection or callouts on phones, except where you type */
+body{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+input,textarea,select,[contenteditable="true"],.pastezone,.textedit{-webkit-user-select:text;user-select:text;-webkit-touch-callout:default}
+img,canvas{-webkit-touch-callout:none;-webkit-user-drag:none}
+.gridpick{display:grid;grid-template-columns:repeat(3,1fr);gap:3px;width:132px;aspect-ratio:1;padding:3px;border:1px solid var(--line-2);border-radius:6px;background:var(--chrome);touch-action:none}
+.gridpick button{border:1px solid var(--line-2);border-radius:3px;background:var(--paste);padding:0;cursor:pointer;min-height:0}
+.gridpick button.cur{background:var(--line-2)}
+.gridpick button.sel{background:var(--accent);border-color:var(--accent)}
+.gridpick{grid-template-rows:repeat(3,1fr)}
+.gridpick.six{gap:1px;width:150px;grid-template-columns:repeat(6,1fr);grid-template-rows:repeat(6,1fr)}
+.gridpick.six button{border-radius:1px;border-color:var(--line)}
+.gridpick.six button.l{margin-left:2px}.gridpick.six button.t{margin-top:2px}
+.gridwrap{display:grid;gap:6px;justify-items:start}
+.gridwrap .k2{font-size:11px;color:var(--faint)}
+.seg.small button{padding:3px 8px;font-size:11.5px}
+.seg.scales{flex-wrap:wrap;max-width:100%}
+.gridrow{display:grid;gap:6px;justify-items:start}
 .layer.locked .thumb{opacity:.7}
 .layer .eye{grid-area:eye;width:24px;height:24px;display:grid;place-items:center;background:none;border:0;border-radius:4px;color:var(--muted)}
 .layer .eye:hover{background:var(--line)}
@@ -212,6 +245,13 @@ button{cursor:pointer}
 .toggles{display:grid;gap:8px}
 .roles{display:grid;gap:9px}
 .roleopt{display:grid;gap:2px}
+.brush{display:grid;gap:8px;padding-bottom:10px;margin-bottom:4px;border-bottom:1px solid var(--line)}
+.brush .bnum{width:58px}
+.swatches{display:flex;flex-wrap:wrap;gap:4px}
+.swatch{width:20px;height:20px;border-radius:50%;border:1px solid var(--line-2);padding:0;cursor:pointer}
+.swatch.on{outline:2px solid var(--accent);outline-offset:1px}
+.btn.cutbtn[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+#btnDraw.on{background:var(--accent-soft);color:var(--accent);border-color:var(--accent)}
 .linkbtn{background:none;border:0;padding:0;color:var(--accent);font:inherit;text-decoration:underline;cursor:pointer}
 .roleopt small{color:var(--faint);font-size:11px;padding-left:39px;text-wrap:pretty}
 .rotrow{display:flex;align-items:center;gap:4px;min-width:0}
@@ -385,6 +425,14 @@ select option{background:var(--panel);color:#c2ccc6}
         <div class="head"><h2>All layouts</h2><p>Every aspect ratio, rendered as it will export. Select one to edit it.</p></div>
         <div id="pgrid"></div>
       </div>
+      <div id="rpv" hidden>
+        <div class="rpv-bar"><b>Responsive preview</b><span id="rpvInfo"></span><span class="sp"></span>
+          <button class="btn small" id="rpvReset" type="button">Reset size</button><button class="btn small primary" id="rpvDone" type="button">Done</button></div>
+        <div class="rpv-area" id="rpvArea"><div class="rpv-frame" id="rpvFrame"><canvas id="rpvCanvas"></canvas>
+          <div class="rh r" data-h="r" title="Drag to resize"></div><div class="rh b" data-h="b" title="Drag to resize"></div><div class="rh rb" data-h="rb" title="Drag to resize"></div>
+          <div class="rh l" data-h="l" title="Drag to resize"></div><div class="rh t" data-h="t" title="Drag to resize"></div></div></div>
+        <p class="rpv-tip">Drag the edges or corner to resize the window. The poster switches to the layout closest to its shape and shows it exactly as that layout exports.</p>
+      </div>
     </section>
     <aside id="dock" class="pane-layers">
       <div class="dock-tabs" role="tablist" aria-label="Panels">
@@ -393,7 +441,7 @@ select option{background:var(--panel);color:#c2ccc6}
       </div>
       <section class="pnl" id="layersPnl" aria-label="Layers">
         <div class="pnl-h"><button class="ib chev" data-collapse="layers" aria-label="Collapse layers" title="Collapse"></button><h3>Layers</h3><span class="count" id="lcount"></span><span class="sp"></span>
-          <button class="btn small ghost" id="btnImport" title="Import images">Import</button><button class="btn small ghost" id="btnText" title="Add a text layer">Text</button>
+          <button class="btn small ghost" id="btnImport" title="Import images">Import</button><button class="btn small ghost" id="btnText" title="Add a text layer">Text</button><button class="btn small ghost" id="btnDraw" title="Draw on a new layer">Draw</button>
         </div>
         <ul id="layers" aria-label="Layer list"></ul>
         <div class="pnl-f">
@@ -456,7 +504,17 @@ function UPEngine(){
     var D=Math.sqrt(W*H), a=aw/ah*(pl.ar||1);   // ar: width/height stretch when scaled non-proportionally
     w=pl.s*D*Math.sqrt(a); h=pl.s*D/Math.sqrt(a);
     // Assets shrink to fit the canvas unless the user deliberately made them bigger (free)
-    if(!pl.free){var f=Math.min(1,W/w,H/h); w*=f; h*=f;}
+    if(pl.fit){   // Scale to fit / fill: worked out for each layout's own shape (rotation included)
+      var rr=(pl.rot||0)*Math.PI/180,cc=Math.abs(Math.cos(rr)),ss=Math.abs(Math.sin(rr)),bw=w*cc+h*ss,bh=w*ss+h*cc,kk=pl.fit==='fill'?Math.max(W/bw,H/bh):Math.min(W/bw,H/bh);
+      w*=kk;h*=kk;
+    } else if(!pl.free){var f=Math.min(1,W/w,H/h); w*=f; h*=f;}
+    if(pl.cell){   // a grid area chosen in Properties: fitted inside those composition-grid cells in every layout
+      var c=pl.cell,N=c.n||3,X0=c.c0/N*W,X1=(c.c1+1)/N*W,Y0=c.r0/N*H,Y1=(c.r1+1)/N*H,rr2=(pl.rot||0)*Math.PI/180,c2=Math.abs(Math.cos(rr2)),s2=Math.abs(Math.sin(rr2));
+      var bw2=w*c2+h*s2,bh2=w*s2+h*c2,kw=(X1-X0)/bw2,kh=(Y1-Y0)/bh2,m=c.k||'fit';
+      // scale presets inside the area: fit, fill, match width, match height, or a share of the fitted size
+      var k2=m==='fill'?Math.max(kw,kh):m==='w'?kw:m==='h'?kh:typeof m==='number'?Math.min(kw,kh)*m:Math.min(kw,kh);w*=k2;h*=k2;
+      return {x:(X0+X1)/2-w/2,y:(Y0+Y1)/2-h/2,w:w,h:h,rot:pl.rot||0};
+    }
     // dx, dy: how far past the edges (as a fraction of the canvas width / height) it was dragged, so assets can
     // go partly or fully off the poster even when they exactly fit one side
     return {x:(W-w)*pl.ax+(pl.dx||0)*W,y:(H-h)*pl.ay+(pl.dy||0)*H,w:w,h:h,rot:pl.rot||0};
@@ -464,6 +522,7 @@ function UPEngine(){
   function fromBox(layer,asset,b,W,H,prev){
     var pl={ax:0.5,ay:0.5,s:0.3,rot:0,zoom:1,show:true};
     if(prev) for(var k in prev) if(k.charAt(0)!=='_') pl[k]=prev[k];
+    delete pl.fit;delete pl.cell;delete pl.span;delete pl.snapX;delete pl.snapY;   // a box set by hand is a size and place of its own again
     var fx=W-b.w, fy=H-b.h;
     if(layer.category==='background'){
       pl.ax=Math.abs(fx)<0.5?pl.ax:clamp(b.x/fx,0,1);
@@ -482,9 +541,10 @@ function UPEngine(){
     return pl;
   }
   function alphaOf(p){return p._a!=null?p._a:(p.show===false?0:1);}
+  function same(a,b){return a&&b&&JSON.stringify(a)===JSON.stringify(b)?a:undefined;}
   function lerpPl(a,b,t){
     var d=((b.rot||0)-(a.rot||0))%360; if(d>180)d-=360; if(d<-180)d+=360;
-    return {ax:lerp(a.ax,b.ax,t),ay:lerp(a.ay,b.ay,t),dx:lerp(a.dx||0,b.dx||0,t),dy:lerp(a.dy||0,b.dy||0,t),s:lerp(a.s,b.s,t),zoom:lerp(a.zoom||1,b.zoom||1,t),ar:Math.exp(lerp(Math.log(a.ar||1),Math.log(b.ar||1),t)),rot:(a.rot||0)+d*t,show:true,free:!!(a.free||b.free),_a:lerp(alphaOf(a),alphaOf(b),t)};
+    return {ax:lerp(a.ax,b.ax,t),ay:lerp(a.ay,b.ay,t),dx:lerp(a.dx||0,b.dx||0,t),dy:lerp(a.dy||0,b.dy||0,t),s:lerp(a.s,b.s,t),zoom:lerp(a.zoom||1,b.zoom||1,t),ar:Math.exp(lerp(Math.log(a.ar||1),Math.log(b.ar||1),t)),rot:(a.rot||0)+d*t,show:true,free:!!(a.free||b.free),fit:a.fit&&a.fit===b.fit?a.fit:undefined,cell:same(a.cell,b.cell),_a:lerp(alphaOf(a),alphaOf(b),t)};
   }
   /* Text layers show automatically only in thin layouts (banners, strips, anything 3:1 or thinner),
      unless the user switched them on or off for a layout. */
@@ -682,6 +742,9 @@ const ICONS={
   zoomOut:'<circle cx="7" cy="7" r="4.5"/><path d="M10.4 10.4 14 14M5 7h4"/>',
   hand:'<path d="M5.5 8.5V3.8a1 1 0 0 1 2 0V7.5M7.5 7V2.8a1 1 0 0 1 2 0V7.5M9.5 7.2V3.8a1 1 0 0 1 2 0v5.4M11.5 6.6a1 1 0 0 1 2 0V10c0 2.5-1.8 4.5-4.5 4.5H8.4c-1.4 0-2.4-.6-3.2-1.7L3 9.6a1 1 0 0 1 1.6-1.2l.9 1.1"/>',
   reset:'<path d="M3 8a5 5 0 1 0 1.6-3.7"/><path d="M3 2.5v3h3"/>',
+  link:'<path d="M6.8 9.2a2.8 2.8 0 0 0 4 0l2-2a2.8 2.8 0 0 0-4-4l-.8.8"/><path d="M9.2 6.8a2.8 2.8 0 0 0-4 0l-2 2a2.8 2.8 0 0 0 4 4l.8-.8"/>',
+  unlink:'<path d="M9.5 3.6l.3-.3a2.8 2.8 0 0 1 4 4l-1.6 1.6M6.5 12.4l-.3.3a2.8 2.8 0 0 1-4-4l1.6-1.6"/><path d="M2.5 2.5l11 11"/>',
+  scissors:'<circle cx="4.5" cy="11.5" r="2"/><circle cx="11.5" cy="11.5" r="2"/><path d="M5.9 10 12.5 2M10.1 10 3.5 2"/>',
   resetAll:'<path d="M3 8a5 5 0 1 0 1.6-3.7"/><path d="M3 2.5v3h3"/><circle cx="8" cy="8" r="1.3"/>',
 };
 const icon=n=>`<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[n]||''}</svg>`;
@@ -726,7 +789,6 @@ const IMG=new Map();
 let P=freshProject();
 const getImg=id=>IMG.get(id);
 let sel=new Set();
-let scope='shared';            // 'shared' | 'layout'
 let previewMode=false;
 let dirty=false, lastSavedName=null;
 let modalCount=0;
@@ -737,8 +799,8 @@ const layerBy=id=>P.layers.find(L=>L.id===id);
 const assetOf=L=>P.assets[L.assetId];
 const isRef=L=>L.category==='reference';
 const isBg=L=>L.category==='background';
+const isImg=L=>!L.type||L.type==='image';   // an imported or pasted picture (not text or a drawing)
 const ovCount=rk=>Object.keys(P.layouts.overrides[rk]||{}).length;
-const autoScope=rk=>rk===P.baseRatio?'shared':'layout';
 
 /* =====================================================================
    3. HISTORY (undo / redo) — snapshots of everything except image data
@@ -763,20 +825,35 @@ function edit(fn,{animate=true}={}){
 }
 function markDirty(){dirty=true;P.meta.modified=Date.now();renderSaveState();scheduleAutosave();}
 
-/* Placement writes respect the edit scope. */
-let droppedOverride=false;
-function writePl(id,pl){
-  const rk=P.activeRatio;
-  if(scope==='shared'){
-    P.layouts.shared[id]=pl;
-    const o=P.layouts.overrides[rk];
-    if(o&&o[id]){delete o[id];droppedOverride=true;}
-  }else{
-    (P.layouts.overrides[rk]||(P.layouts.overrides[rk]={}))[id]=pl;
-    (P.layouts.meta[rk]||(P.layouts.meta[rk]={})).manual=true;
-  }
+/* Placement writes follow the layer's link. A linked layer's edit is applied to every layout as the same relative
+   change (moved by the same share of the free space, scaled by the same factor, turned by the same angle), so each
+   layout keeps its own arrangement and stays in step. An unlinked layer's edit only changes the layout on screen. */
+const isLinked=id=>{const L=layerBy(id);return !L||L.linked!==false;};
+function repDims(rk){const A=aspectOf(rk);return {W:1000*Math.sqrt(A),H:1000/Math.sqrt(A)};}
+function explicitPl(L,pl,rk){   // a fit / fill / grid-area placement as plain numbers, as it looks in that layout
+  if(!pl.fit&&!pl.cell)return {...pl};const {W,H}=repDims(rk),A=assetOf(L);return E.fromBox(L,A,E.box(L,A,pl,W,H),W,H,pl);}
+function deltaPl(L,o,rk,p0,q){
+  if(q.fit||q.cell){const r={...o,fit:q.fit,cell:q.cell,rot:q.rot,ar:q.ar};if(!q.fit)delete r.fit;if(!q.cell)delete r.cell;
+    if(q.fit==='fill'){r.ax=.5;r.ay=.5;}delete r.free;delete r.dx;delete r.dy;return r;}
+  const b=explicitPl(L,o,rk),bg=isBg(L),r={...b};
+  r.ax=bg?clamp(b.ax+(q.ax-p0.ax),0,1):b.ax+(q.ax-p0.ax);r.ay=bg?clamp(b.ay+(q.ay-p0.ay),0,1):b.ay+(q.ay-p0.ay);
+  const dd=(k)=>{const v=(b[k]||0)+((q[k]||0)-(p0[k]||0));if(Math.abs(v)>1e-5)r[k]=v;else delete r[k];};dd('dx');dd('dy');
+  if(p0.s>0)r.s=Math.max(.002,b.s*q.s/p0.s);r.ar=(b.ar||1)*(q.ar||1)/(p0.ar||1);if(Math.abs(r.ar-1)<.002)r.ar=1;
+  r.rot=((((b.rot||0)+((q.rot||0)-(p0.rot||0)))+180)%360+360)%360-180;
+  if(bg)r.zoom=Math.max(1,(b.zoom||1)*(q.zoom||1)/(p0.zoom||1));
+  if(q.free&&!p0.free)r.free=true;
+  return r;
 }
-function notifyDropped(){if(droppedOverride){droppedOverride=false;toast(`Shared edit: removed this layout's custom position so it follows the shared layout`);}}
+function writePl(id,pl){
+  const rk=P.activeRatio,L=layerBy(id),o=P.layouts.overrides;
+  if(!L||L.linked===false){(o[rk]||(o[rk]={}))[id]=pl;(P.layouts.meta[rk]||(P.layouts.meta[rk]={})).manual=true;return;}
+  const p0=explicitPl(L,E.effective(P,L,rk),rk);
+  // every other layout that has its own position for this layer gets the same change
+  for(const k in o){if(k===rk)continue;const ov=o[k][id];if(ov)o[k][id]=deltaPl(L,ov,k,p0,pl);}
+  if(o[rk]&&o[rk][id]){o[rk][id]=pl;const sh=P.layouts.shared[id];if(sh)P.layouts.shared[id]=deltaPl(L,sh,P.baseRatio,p0,pl);}
+  else P.layouts.shared[id]=pl;
+}
+function notifyDropped(){}
 
 /* =====================================================================
    4. IMAGES & IMPORT
@@ -1011,7 +1088,7 @@ function drawOverlay(F,plMap){
   const selL=[...sel].map(layerBy).filter(L=>L&&L.visible&&!(textEdit&&textEdit.L===L));
   for(const L of selL){
     const {b,pts}=draw1(L,true);
-    if(selL.length===1&&!plMap&&!L.locked){
+    if(selL.length===1&&!plMap&&!L.locked&&!pen&&!cut){
       if(!isBg(L)){const rh=rotHandle(b),tm=[(pts[0][0]+pts[1][0])/2,(pts[0][1]+pts[1][1])/2];
         ctx.beginPath();ctx.moveTo(tm[0],tm[1]);ctx.lineTo(rh[0],rh[1]);ctx.strokeStyle=COL.sel;ctx.lineWidth=1;ctx.stroke();
         ctx.beginPath();ctx.arc(rh[0],rh[1],5.5,0,Math.PI*2);ctx.fillStyle='#fff';ctx.fill();ctx.stroke();}
@@ -1020,6 +1097,7 @@ function drawOverlay(F,plMap){
   }
   if(textEdit&&textEdit.prev){const pts=cornersOf(boxOf(textEdit.L));ctx.beginPath();pts.forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));ctx.closePath();
     ctx.strokeStyle=COL.sel;ctx.lineWidth=1;ctx.setLineDash([4,3]);ctx.stroke();ctx.setLineDash([]);}
+  drawToolOverlay();
   if(guides.length){ctx.strokeStyle=COL.guide;ctx.lineWidth=1;ctx.setLineDash([5,4]);ctx.beginPath();for(const g of guides){ctx.moveTo(g[0],g[1]);ctx.lineTo(g[2],g[3]);}ctx.stroke();ctx.setLineDash([]);}
   ctx.restore();
 }
@@ -1054,7 +1132,7 @@ function pinchMid(){const v=[...touchPts.values()];return {x:(v[0].x+v[1].x)/2,y
 cv.addEventListener('pointerdown',e=>{
   if(e.pointerType==='touch'){touchPts.set(e.pointerId,{x:e.clientX,y:e.clientY});
     if(touchPts.size===2&&!previewMode){
-      if(drag){if(drag.moved){restoreSnap(drag.before);refreshAll();}drag=null;guides=[];}panDrag=null;
+      if(drag){if(drag.moved){restoreSnap(drag.before);refreshAll();}drag=null;guides=[];}panDrag=null;if(pen)pen.live=null;if(cut)cut.pts=null;
       const r=cv.getBoundingClientRect(),m=pinchMid();pinch={d0:Math.max(1,m.d),z0:viewZoom,mx:m.x-r.left,my:m.y-r.top,last:{x:m.x,y:m.y}};pinchHold=true;cv.setPointerCapture(e.pointerId);return;}
     if(touchPts.size>2||pinchHold)return;}
   if(previewMode)return; closeMenus();
@@ -1062,6 +1140,8 @@ cv.addEventListener('pointerdown',e=>{
   if(handActive()||e.button===1){e.preventDefault();panDrag={x:e.clientX,y:e.clientY,px:viewPan.x,py:viewPan.y};cv.style.cursor='grabbing';cv.setPointerCapture(e.pointerId);return;}
   if(e.button>0)return;
   if(anim){anim=null;}
+  if(pen){e.preventDefault();penDown(toFrame(e));cv.setPointerCapture(e.pointerId);return;}
+  if(cut){e.preventDefault();cut.pts=[toFrame(e)];cv.setPointerCapture(e.pointerId);requestDraw();return;}
   const p=toFrame(e);const hh=hitHandle(p.x,p.y);
   if(hh){sel=new Set([hh.L.id]);beginDrag(hh.type,p,e,hh.i);}
   else{
@@ -1094,6 +1174,8 @@ cv.addEventListener('pointermove',e=>{
   if(panDrag){if(Math.hypot(e.clientX-panDrag.x,e.clientY-panDrag.y)>2)panDrag.moved=true;viewPan.x=panDrag.px+e.clientX-panDrag.x;viewPan.y=panDrag.py+e.clientY-panDrag.y;clampPan();requestDraw();return;}
   if(handActive()&&!drag){cv.style.cursor='grab';return;}
   const p=toFrame(e);
+  if(pen){if(pen.live)penMove(p);else{pen.hover=p;requestDraw();}cv.style.cursor='crosshair';return;}
+  if(cut){if(cut.pts){const q=cut.pts[cut.pts.length-1];if(Math.hypot(p.x-q.x,p.y-q.y)>=2){cut.pts.push(p);requestDraw();}}cv.style.cursor='crosshair';return;}
   if(!drag){
     if(previewMode)return;
     const hh=hitHandle(p.x,p.y);
@@ -1139,7 +1221,8 @@ cv.addEventListener('pointermove',e=>{
       if(e.shiftKey)a=Math.round(a/15)*15;else if(Math.abs(((a%90)+90)%90)<3||Math.abs(((a%90)+90)%90)>87)a=Math.round(a/90)*90;
       a=((a+180)%360+360)%360-180;nb.rot=a;
     }
-    writePl(id,E.fromBox(L,A,nb,W,H,pl0));
+    const q=E.fromBox(L,A,nb,W,H,pl0);
+    writePl(id,q);
   }
   requestDraw();
 });
@@ -1147,7 +1230,7 @@ cv.addEventListener('pointermove',e=>{
    its edges snap to the canvas edges and the thirds lines. Once snapped it sticks a little, so it's easy to keep. */
 const SNAP_IN=8,SNAP_OUT=14;
 function snapAxis(pos,size,S,axis,stick){
-  const centres=[S/6,S/3,S/2,2*S/3,5*S/6],edges=[0,S/3,S/2,2*S/3,S];
+  const centres=[S/6,S/3,S/2,2*S/3,5*S/6],edges=[0,S/6,S/3,S/2,2*S/3,5*S/6,S];
   const cand=[];for(const t of centres)cand.push([t,pos+size/2]);for(const t of edges){cand.push([t,pos]);cand.push([t,pos+size]);}
   if(stick&&stick.axis===axis){const v=stick.edge==='c'?pos+size/2:stick.edge==='l'?pos:pos+size;
     if(Math.abs(stick.t-v)<SNAP_OUT)return {d:stick.t-v,t:stick.t,edge:stick.edge};}
@@ -1161,7 +1244,7 @@ function snapAxis(pos,size,S,axis,stick){
 function snapScale(nb,b0,sxg,syg,centre,prop,W,H,min){
   const st=drag.sstick||{};
   const ax=sxg>0?b0.x:b0.x+b0.w,ay=syg>0?b0.y:b0.y+b0.h,cx=b0.x+b0.w/2,cy=b0.y+b0.h/2;
-  const find=(edge,S,stick)=>{const lines=[0,S/3,S/2,2*S/3,S];
+  const find=(edge,S,stick)=>{const lines=[0,S/6,S/3,S/2,2*S/3,5*S/6,S];   // edges, thirds and the halfway points between them
     if(stick!=null&&Math.abs(stick-edge)<SNAP_OUT)return stick;
     let best=null;for(const t of lines){const d=Math.abs(t-edge);if(d<SNAP_IN&&(best==null||d<Math.abs(best-edge)))best=t;}return best;};
   const ex=sxg>0?nb.x+nb.w:nb.x,ey=syg>0?nb.y+nb.h:nb.y;
@@ -1205,10 +1288,11 @@ function touchEnd(e){if(e.pointerType!=='touch')return false;touchPts.delete(e.p
   if(pinch&&touchPts.size<2){pinch=null;renderOptbar();renderStatus();}
   if(!touchPts.size&&pinchHold){pinchHold=false;return true;}
   return pinchHold;}
-cv.addEventListener('pointerup',e=>{if(touchEnd(e))return;endDrag(e);});cv.addEventListener('pointercancel',e=>{if(touchEnd(e))return;endDrag(e);});
+cv.addEventListener('pointerup',e=>{if(touchEnd(e))return;if(pen&&pen.live){penUp();return;}if(cut&&cut.pts){cutUp();return;}endDrag(e);});
+cv.addEventListener('pointerleave',()=>{if(pen&&pen.hover){pen.hover=null;requestDraw();}});cv.addEventListener('pointercancel',e=>{if(touchEnd(e))return;endDrag(e);});
 cv.addEventListener('pointerleave',()=>{if(hoverId&&!drag){hoverId=null;requestDraw();}});
 function onDoubleTap(clientX,clientY){const p=toFrame({clientX,clientY});const L=hitLayer(p.x,p.y);if(!L)return;sel=new Set([L.id]);refreshSelection();
-  if(L.type==='text'){startTextEdit(L);return;}const inp=$('#pf-ax');if(inp&&matchMedia('(pointer:fine)').matches)inp.focus();}
+  if(L.type==='text'){startTextEdit(L);return;}if(L.type==='draw'){startDraw(L);return;}const inp=$('#pf-ax');if(inp&&matchMedia('(pointer:fine)').matches)inp.focus();}
 cv.addEventListener('dblclick',e=>onDoubleTap(e.clientX,e.clientY));
 cv.addEventListener('doubletap',e=>onDoubleTap(e.detail.x,e.detail.y));
 
@@ -1317,7 +1401,7 @@ function align(op){
       if(op==='left')b.x=x0;if(op==='center'||op==='both')b.x=(x0+x1)/2-b.w/2;if(op==='both')b.y=(y0+y1)/2-b.h/2;if(op==='right')b.x=x1-b.w;
       if(op==='top')b.y=y0;if(op==='middle')b.y=(y0+y1)/2-b.h/2;if(op==='bottom')b.y=y1-b.h;}
     for(const i of items){const pl=E.fromBox(i.L,assetOf(i.L),i.b,W,H,i.pl);
-      if(toCanvas){if(['both','left','center','right'].includes(op))delete pl.dx;if(['both','top','middle','bottom'].includes(op))delete pl.dy;if(op==='both'){pl.ax=.5;pl.ay=.5;}if(op==='left')pl.ax=0;if(op==='center')pl.ax=.5;if(op==='right')pl.ax=1;if(op==='top')pl.ay=0;if(op==='middle')pl.ay=.5;if(op==='bottom')pl.ay=1;}
+      if(toCanvas){if(['both','left','center','right'].includes(op)){delete pl.dx;delete pl.snapX;}if(['both','top','middle','bottom'].includes(op)){delete pl.dy;delete pl.snapY;}if(op==='both'){pl.ax=.5;pl.ay=.5;}if(op==='left')pl.ax=0;if(op==='center')pl.ax=.5;if(op==='right')pl.ax=1;if(op==='top')pl.ay=0;if(op==='middle')pl.ay=.5;if(op==='bottom')pl.ay=1;}
       writePl(i.L.id,pl);}
   });
   notifyDropped();
@@ -1354,16 +1438,18 @@ function setCategory(L,cat){
 /* Scale to fit: the whole asset (rotation included) just fits inside this layout, kept where it is as far as possible.
    Scale to fill: the asset just covers the whole layout, centred. Proportions are kept in both cases. */
 function scaleToCanvas(L,mode){
+  // an image Automate made the background becomes a normal asset first, kept where it is, so it can be scaled
+  if(isBg(L))roleChange(L,'background');
   edit(()=>{
-    const W=curFrame.w,H=curFrame.h,pl={...E.effective(P,L,P.activeRatio)},b=boxOf(L,pl),r=(b.rot||0)*Math.PI/180,c=Math.abs(Math.cos(r)),sn=Math.abs(Math.sin(r));
-    const bw=b.w*c+b.h*sn,bh=b.w*sn+b.h*c,k=mode==='fit'?Math.min(W/bw,H/bh):Math.max(W/bw,H/bh),nw=b.w*k,nh=b.h*k,aw=bw*k,ah=bh*k;
-    let cx=b.x+b.w/2,cy=b.y+b.h/2;
-    if(mode==='fit'){cx=clamp(cx,aw/2,W-aw/2);cy=clamp(cy,ah/2,H-ah/2);}else{cx=W/2;cy=H/2;}
-    const nb={x:cx-nw/2,y:cy-nh/2,w:nw,h:nh,rot:b.rot||0},q=E.fromBox(L,assetOf(L),nb,W,H,pl);
-    if(mode==='fill')q.free=true;else delete q.free;
+    const W=curFrame.w,H=curFrame.h,pl={...E.effective(P,L,P.activeRatio)};
+    const q={...pl,fit:mode,ar:pl.ar||1};delete q.free;delete q.dx;delete q.dy;delete q.span;delete q.snapX;delete q.snapY;
+    if(mode==='fill'){q.ax=.5;q.ay=.5;}else{q.ax=clamp(pl.ax,0,1);q.ay=clamp(pl.ay,0,1);}
+    const b=E.box(L,assetOf(L),q,W,H);q.s=Math.sqrt(b.w*b.h/(W*H));   // size here, kept for reference
     writePl(L.id,q);
   });
-  notifyDropped();toast(mode==='fit'?`${L.name} scaled to fit ${ratioBy(P.activeRatio).name}`:`${L.name} scaled to fill ${ratioBy(P.activeRatio).name}`,'ok');
+  notifyDropped();
+  const where=isLinked(L.id)?'every layout':ratioBy(P.activeRatio).name;
+  toast(mode==='fit'?`${L.name} now fits ${where}`:`${L.name} now fills ${where}`,'ok');
 }
 function deleteSelected(){
   if(!sel.size)return;const n=sel.size;
@@ -1542,7 +1628,7 @@ function resetLayout(rk=P.activeRatio){
 function setLayout(rk,{silent=false}={}){
   if(textEdit)finishTextEdit();
   if(!P.ratios.some(r=>r.key===rk))return;
-  const d=currentDisplay();P.activeRatio=rk;scope=autoScope(rk);viewPan={x:0,y:0};
+  const d=currentDisplay();P.activeRatio=rk;viewPan={x:0,y:0};
   if(previewMode&&!silent)setPreviewMode(false);
   refreshAll();animateFrom(d,520);
 }
@@ -1556,7 +1642,7 @@ function makeBase(){
     for(const id in o)P.layouts.shared[id]=o[id];
     P.layouts.overrides[rk]={};P.baseRatio=rk;
   },{animate:false});
-  scope='shared';refreshAll();toast(`${ratioBy(rk).name} is now the base layout. Shared edits start from here.`,'ok');
+  refreshAll();toast(`${ratioBy(rk).name} is now the base layout. Shared edits start from here.`,'ok');
 }
 
 /* =====================================================================
@@ -1605,6 +1691,9 @@ function menuDefs(){
       {label:'Delete',sc:'Del',dis:!has,act:deleteSelected},
       {label:'Reset Layer in This Layout',dis:!has,act:resetLayerOverride},
       {sep:1},
+      {label:'Cut Out…',dis:!cutTarget(),act:startCut},
+      {label:'Remove Background',dis:!cutTarget(),act:autoCutout},
+      {sep:1},
       {label:'Automate…',sc:MOD+'Shift+A',act:()=>automateDialog()},
     ],
     View:[
@@ -1627,6 +1716,8 @@ function menuDefs(){
       {label:'Remove This Custom Layout',dis:!ratioBy(P.activeRatio).custom||P.activeRatio===P.baseRatio,act:removeCustom},
       {label:'Make This the Base Layout',dis:P.activeRatio===P.baseRatio,act:makeBase},
       {label:'Reset This Layout to Shared',dis:!ovCount(P.activeRatio),act:()=>resetLayout()},
+      {sep:1},
+      {label:'Responsive Preview',check:!!rpv,act:()=>rpv?closeRpv():openRpv()},
     ],
   };
 }
@@ -1666,13 +1757,10 @@ document.addEventListener('click',e=>{if(openMenu&&!e.target.closest('#dd'))clos
 
 function renderOptbar(){
   const o=$('#optinner');o.innerHTML='';
-  if(UI.notools){o.append(el('button',{class:'barbtn',title:'Show the toolbar','aria-label':'Show the toolbar',onclick:()=>setUI({notools:false}),html:`<span>Toolbar</span><em>edits: ${scope==='shared'?'all layouts':esc(ratioBy(P.activeRatio).name)+' only'} · ${Math.round(viewZoom*100)}%</em>`+CHEV.replace('<svg','<svg style="transform:rotate(180deg)"')}));return;}
+  if(UI.notools){o.append(el('button',{class:'barbtn',title:'Show the toolbar','aria-label':'Show the toolbar',onclick:()=>setUI({notools:false}),html:`<span>Toolbar</span><em>${Math.round(viewZoom*100)}%</em>`+CHEV.replace('<svg','<svg style="transform:rotate(180deg)"')}));return;}
   const has=sel.size>0,rk=P.activeRatio,r=ratioBy(rk);
   const ib=(ic,title,fn,dis,pressed)=>el('button',{class:'ib',title,'aria-label':title,disabled:!!dis,'aria-pressed':pressed==null?null:String(!!pressed),html:icon(ic),onclick:fn});
-  const seg=el('div',{class:'seg',role:'group','aria-label':'Edits apply to'},
-    el('button',{'aria-pressed':String(scope==='shared'),title:'Changes update every layout that has no custom position for that layer',onclick:()=>{scope='shared';renderOptbar();renderProps();renderStatus();},text:'All layouts'}),
-    el('button',{'aria-pressed':String(scope==='layout'),title:`Changes only affect ${r.name}`,onclick:()=>{scope='layout';renderOptbar();renderProps();renderStatus();},text:`${r.name} only`}));
-  o.append(el('span',{class:'lbl',text:'Edits apply to'}),seg,
+  o.append(
     ib('reset','Reset selected layers to the shared layout in this layout',resetLayerOverride,!has||![...sel].some(id=>E.hasOverride(P,id,rk))),
     ib('resetAll','Reset this whole layout to the shared layout',()=>resetLayout(),!ovCount(rk)),
     el('span',{class:'vsep'}),
@@ -1688,6 +1776,7 @@ function renderOptbar(){
     el('span',{class:'vsep'}),
     el('div',{class:'grp'},ib('undo',`Undo (${MOD}Z)`,undo,!HIST.undo.length),ib('redo',`Redo (${MOD}Shift+Z)`,redo,!HIST.redo.length)),
     el('span',{class:'vsep'}),
+    el('button',{class:'btn cutbtn','aria-pressed':String(!!cut),title:'Cut out: draw loosely around part of an image to keep just that part',onclick:startCut,html:icon('scissors')+'<span>Cut out</span>'}),
     el('button',{class:'btn primary',title:'Build layouts for every aspect ratio from your assets and references',onclick:()=>automateDialog(),html:icon('wand')+'<span>Automate</span>'}),
     el('button',{class:'ib bar-end',title:'Hide the toolbar','aria-label':'Hide the toolbar',onclick:()=>setUI({notools:true}),html:CHEV}));
 }
@@ -1710,6 +1799,7 @@ function renderTabs(){
 
 let dragLayerId=null;
 function renderLayers(){
+  {const db=$('#btnDraw');if(db){db.classList.toggle('on',!!pen);db.textContent=pen?'Done':'Draw';}}
   const ul=$('#layers');ul.innerHTML='';
   $('#lcount').textContent=P.layers.length?String(P.layers.length):'';
   if(!P.layers.length){ul.append(el('li',{class:'emptyl',text:'No layers yet. Import assets or reference posters to begin.'}));}
@@ -1730,6 +1820,7 @@ function renderLayers(){
     const nm=el('span',{text:L.name,title:`${L.name} — double-click to rename`});
     const li=el('li',{class:'layer'+(isRef(L)?' ref':'')+(L.locked?' locked':''),'aria-selected':String(sel.has(L.id)),'data-id':L.id,draggable:'true'},
       el('button',{class:'lock'+(L.locked?' on':''),title:L.locked?'Unlock layer':'Lock layer in place','aria-label':L.locked?`Unlock ${L.name}`:`Lock ${L.name}`,'aria-pressed':String(!!L.locked),html:icon(L.locked?'lock':'unlock'),onclick:e=>{e.stopPropagation();edit(()=>{L.locked=!L.locked;},{animate:false});}}),
+      el('button',{class:'link'+(L.linked!==false?' on':''),title:L.linked!==false?'Linked: edits apply to every aspect ratio. Click to edit this aspect ratio only':'Unlinked: edits only change this aspect ratio. Click to link','aria-label':L.linked!==false?`Unlink ${L.name} across aspect ratios`:`Link ${L.name} across aspect ratios`,'aria-pressed':String(L.linked!==false),html:icon(L.linked!==false?'link':'unlink'),onclick:e=>{e.stopPropagation();edit(()=>{L.linked=L.linked===false;},{animate:false});toast(L.linked!==false?`${L.name} is linked: edits apply to every aspect ratio`:`${L.name} is unlinked: edits only change the aspect ratio you're editing`);}}),
       el('button',{class:'eye'+(L.visible?'':' off'),title:L.visible?'Hide layer':'Show layer','aria-label':L.visible?`Hide ${L.name}`:`Show ${L.name}`,html:icon(L.visible?'eye':'eyeOff'),onclick:e=>{e.stopPropagation();edit(()=>{L.visible=!L.visible;},{animate:false});}}),
       el('img',{class:'thumb',src:A.thumb,alt:''}),
       el('div',{class:'nm'},nm,ov?el('span',{class:'ovdot',title:`Custom position in ${ratioBy(rk).name}`}):null,hiddenHere?el('span',{class:'hid',text:'hidden here'}):null),
@@ -1761,40 +1852,75 @@ function numField(id,label,val,unit,onCommit,step=1){
   inp.addEventListener('keydown',e=>{if(e.key==='Enter')inp.blur();e.stopPropagation();});
   return el('label',{class:'num'},el('span',{text:label}),inp,unit?el('em',{text:unit}):null);
 }
+/* Grid area picker: tap a composition-grid cell, or drag across several, to move and scale the asset to fit there.
+   On a linked layer every aspect ratio uses its own grid, so the asset sits in the same area everywhere. */
+function cellName(c){
+  const N=c.n||3;
+  if(N===6&&!(c.c0%2===0&&c.c1%2===1&&c.r0%2===0&&c.r1%2===1)){const f=v=>Math.round(v/6*100);return `${f(c.c0)}–${f(c.c1+1)}% across, ${f(c.r0)}–${f(c.r1+1)}% down`;}
+  const t=N===6?{c0:c.c0/2,c1:(c.c1-1)/2,r0:c.r0/2,r1:(c.r1-1)/2}:c,R=['Top','Middle','Bottom'],C=['left','centre','right'];
+  if(t.c0===0&&t.c1===2&&t.r0===0&&t.r1===2)return 'Whole poster';
+  const rs=t.r0===t.r1?R[t.r0]:t.r0===0&&t.r1===2?'':`${R[t.r0]}–${R[t.r1].toLowerCase()}`,cs=t.c0===t.c1?C[t.c0]:t.c0===0&&t.c1===2?'':`${C[t.c0]}–${C[t.c1]}`;
+  if(!rs)return `${cs[0].toUpperCase()+cs.slice(1)} column`;if(!cs)return `${rs} row`;if(rs==='Middle'&&cs==='centre')return 'Centre';return `${rs}-${cs}`;}
+const CELL_SCALES=[['fit','Fit'],['fill','Fill'],['w','Width'],['h','Height'],[.75,'75%'],[.5,'50%']];
+function gridPicker(L,pl,b){
+  const wrap=el('div',{class:'gridwrap'}),W=curFrame.w,H=curFrame.h;
+  const N=pl.cell?pl.cell.n||3:(UI.gridN||3),k=pl.cell?pl.cell.k||'fit':'fit';
+  // which grid: thirds, or thirds plus the halfway points between them (sixths)
+  const gseg=el('div',{class:'seg small',role:'group','aria-label':'Grid'},
+    ...[[3,'Thirds'],[6,'Halfway points']].map(([n,t])=>el('button',{type:'button','aria-pressed':String(N===n),onclick:()=>{setUI({gridN:n});
+      if(pl.cell&&(pl.cell.n||3)!==n){const c=pl.cell,f=n/(c.n||3);placeInCell(L,{n,c0:Math.floor(c.c0*f),c1:Math.ceil((c.c1+1)*f)-1,r0:Math.floor(c.r0*f),r1:Math.ceil((c.r1+1)*f)-1,k:c.k});}else renderProps();},text:t})));
+  const g=el('div',{class:'gridpick'+(N===6?' six':''),role:'group','aria-label':'Choose a grid area'});
+  const cur=pl.cell&&(pl.cell.n||3)===N?pl.cell:(()=>{const cx=(b.x+b.w/2)/W,cy=(b.y+b.h/2)/H,c=clamp(Math.floor(cx*N),0,N-1),r=clamp(Math.floor(cy*N),0,N-1);return {c0:c,c1:c,r0:r,r1:r,soft:true};})();
+  const cells=[];
+  for(let r=0;r<N;r++)for(let c=0;c<N;c++){const nm=cellName({n:N,c0:c,c1:c,r0:r,r1:r}),bt=el('button',{type:'button','data-c':c,'data-r':r,title:nm,'aria-label':nm});
+    if(N===6){if(c%2===0&&c)bt.classList.add('l');if(r%2===0&&r)bt.classList.add('t');}cells.push(bt);g.append(bt);}
+  const paint=(sel,cl)=>cells.forEach(bt=>{const c=+bt.dataset.c,r=+bt.dataset.r,on=sel&&c>=sel.c0&&c<=sel.c1&&r>=sel.r0&&r<=sel.r1;bt.classList.toggle(cl,!!on);});
+  paint(cur,cur.soft?'cur':'sel');
+  let st=null;const at=e=>{const t=document.elementFromPoint(e.clientX,e.clientY);return t&&t.parentNode===g&&t.dataset.c!=null?t:null;};
+  const area=(a,z)=>({n:N,k,c0:Math.min(+a.dataset.c,+z.dataset.c),c1:Math.max(+a.dataset.c,+z.dataset.c),r0:Math.min(+a.dataset.r,+z.dataset.r),r1:Math.max(+a.dataset.r,+z.dataset.r)});
+  g.addEventListener('pointerdown',e=>{const t=at(e);if(!t)return;e.preventDefault();g.setPointerCapture(e.pointerId);st=t;paint(area(t,t),'sel');});
+  g.addEventListener('pointermove',e=>{if(!st)return;const t=at(e);if(t)paint(area(st,t),'sel');});
+  g.addEventListener('pointerup',e=>{if(!st)return;const t=at(e)||st,a=area(st,t);st=null;placeInCell(L,a);});
+  g.addEventListener('pointercancel',()=>{st=null;paint(cur,cur.soft?'cur':'sel');});
+  // scale presets inside the chosen area
+  const tips={fit:'Largest size that fits inside the area',fill:'Covers the whole area (may spill past it)',w:'As wide as the area',h:'As tall as the area'};
+  const sseg=el('div',{class:'seg small scales',role:'group','aria-label':'Scale in the grid area'},
+    ...CELL_SCALES.map(([v,t])=>el('button',{type:'button','aria-pressed':String(!!pl.cell&&k===v),title:tips[v]||`${t} of the fitted size`,
+      onclick:()=>placeInCell(L,{n:N,c0:cur.c0,c1:cur.c1,r0:cur.r0,r1:cur.r1,k:v}),text:t})));
+  wrap.append(gseg,g,el('span',{class:'k2',text:'Scale in area'}),sseg);
+  return wrap;
+}
+function placeInCell(L,cell){
+  if(isBg(L))roleChange(L,'background');
+  edit(()=>{const pl={...E.effective(P,L,P.activeRatio),cell};delete pl.fit;delete pl.free;delete pl.dx;delete pl.dy;if(!cell.n)cell.n=3;if(!cell.k)cell.k='fit';
+    const W=curFrame.w,H=curFrame.h,bx=E.box(L,assetOf(L),pl,W,H);pl.s=Math.sqrt(bx.w*bx.h/(W*H));writePl(L.id,pl);});
+  toast(`${L.name} placed in ${cellName(cell).replace(/^[A-Z]/,m=>m.toLowerCase())} (${(CELL_SCALES.find(x=>x[0]===cell.k)||[0,'Fit'])[1].toLowerCase()}) ${isLinked(L.id)?'in every aspect ratio':'in '+ratioBy(P.activeRatio).name}`,'ok');
+}
 function renderProps(){
   const body=$('#propsBody');body.innerHTML='';
   const rk=P.activeRatio,r=ratioBy(rk);
   const Ls=[...sel].map(layerBy).filter(Boolean);
+  if(pen){body.append(brushPanel(pen.L));if(!pen.L)return;}
   if(Ls.length===1){
     const L=Ls[0],A=assetOf(L);
     if(L.type==='text')textProps(L,body);
+    else if(L.type==='draw'){if(!pen)body.append(brushPanel(L));}
     else body.append(el('div',{class:'prow'},el('span',{class:'k',text:'Image'}),el('span',{class:'v',text:`${A.w} × ${A.h} PNG`})));
     if(L.type!=='text'&&isRef(L)){
       body.append(el('p',{class:'hint'},'Automate found your other images inside this one, so it’s used as a reference poster: shown faded and never exported. ',
         el('button',{class:'linkbtn',type:'button',text:'Use as a normal image',onclick:()=>roleChange(L,'reference')})));
     }
-    // "Fill the poster" sits with the scale options (images only, not references)
-    let fillSw=null;
-    if(L.type!=='text'&&!isRef(L)){
-      const hint='Always covers the whole poster without stretching. Drag to pick the crop, drag a corner to zoom.';
-      const i=el('input',{type:'checkbox',role:'switch',checked:isBg(L)});i.addEventListener('change',()=>roleChange(L,'background'));
-      fillSw=el('div',{class:'roleopt'},el('label',{class:'switch',title:hint},i,el('span',{class:'track','aria-hidden':'true'}),el('span',{text:'Fill the poster'})),el('small',{text:hint}),
-        L.catAuto&&isBg(L)?el('small',{text:'Set automatically by Automate. Switch it off if that’s not what you want.'}):null);
-    }
     if(isRef(L))body.append(el('div',{class:'prow'},el('span',{class:'k',text:'Ratio'}),el('span',{class:'v',text:(()=>{const [a,b]=reduceRatio(A.w,A.h);return a<=400?`${a}:${b}`:`${fmt(A.w/A.h,3)}:1`;})()})));
     if(L.locked){body.append(el('p',{class:'hint',text:'Locked: it can’t be moved, scaled or rotated until you unlock it. Automate leaves it alone too.'}));return;}
     const pl=E.effective(P,L,rk),ov=E.hasOverride(P,L.id,rk),b=boxOf(L,pl);
-    body.append(el('div',{class:'status'+(ov?' ovr':'')},el('span',{class:'dot'}),
-      el('span',{class:'grow',text:ov?`Custom position in ${r.name}`:'Follows the shared layout'}),
-      ov?el('button',{class:'btn small',onclick:resetLayerOverride,text:'Use shared'}):null));
-    body.append(el('p',{class:'hint',text:scope==='shared'?`Edits update every layout${ov?' and remove this custom position':''}.`:`Edits only change ${r.name}.`}));
+    if(L.linked===false)body.append(el('p',{class:'hint',text:`Unlinked: edits only change ${r.name}. Turn the link on in the Layers panel to edit every layout together.`}));
     const apply=fn=>{edit(()=>{const p={...E.effective(P,L,rk)};fn(p);writePl(L.id,p);});notifyDropped();};
     body.append(el('div',{class:'prow'},el('span',{class:'k',text:isBg(L)?'Focal point':'Position'}),el('div',{class:'pair'},
-      numField('pf-ax','X',fmt(posFrac(pl,b,'x')*100,1),'%',v=>apply(p=>{p.ax=isBg(L)?clamp(v/100,0,1):v/100;delete p.dx;}),.5),
-      numField('pf-ay','Y',fmt(posFrac(pl,b,'y')*100,1),'%',v=>apply(p=>{p.ay=isBg(L)?clamp(v/100,0,1):v/100;delete p.dy;}),.5))));
+      numField('pf-ax','X',fmt(posFrac(pl,b,'x')*100,1),'%',v=>apply(p=>{p.ax=isBg(L)?clamp(v/100,0,1):v/100;delete p.dx;delete p.snapX;}),.5),
+      numField('pf-ay','Y',fmt(posFrac(pl,b,'y')*100,1),'%',v=>apply(p=>{p.ay=isBg(L)?clamp(v/100,0,1):v/100;delete p.dy;delete p.snapY;}),.5))));
     if(isBg(L)) body.append(el('div',{class:'prow'},el('span',{class:'k',text:'Zoom'}),numField('pf-z','',fmt((pl.zoom||1)*100,0),'%',v=>apply(p=>p.zoom=clamp(v/100,1,100)))));
     else body.append(el('div',{class:'prow'},el('span',{class:'k',text:'Size / rotate'}),el('div',{class:'pair'},
-      numField('pf-s','S',fmt(pl.s*100,1),'%',v=>apply(p=>{p.s=Math.max(.005,v/100);const T=curFrame,a=assetOf(L),ar=(a.w/a.h)*(p.ar||1),D=Math.sqrt(T.w*T.h),w=p.s*D*Math.sqrt(ar),h=p.s*D/Math.sqrt(ar);if(w>T.w+.5||h>T.h+.5)p.free=true;else delete p.free;}),.5),
+      numField('pf-s','S',fmt((pl.fit?Math.sqrt(b.w*b.h/(curFrame.w*curFrame.h)):pl.s)*100,1),'%',v=>apply(p=>{delete p.fit;delete p.span;p.s=Math.max(.005,v/100);const T=curFrame,a=assetOf(L),ar=(a.w/a.h)*(p.ar||1),D=Math.sqrt(T.w*T.h),w=p.s*D*Math.sqrt(ar),h=p.s*D/Math.sqrt(ar);if(w>T.w+.5||h>T.h+.5)p.free=true;else delete p.free;}),.5),
       numField('pf-r','R',fmt(pl.rot||0,1),'°',v=>apply(p=>p.rot=((v+180)%360+360)%360-180)))));
     if(!isBg(L)){
       // Rotation: slider for live turning, plus quarter turns and reset
@@ -1810,11 +1936,10 @@ function renderProps(){
         el('button',{class:'btn small',title:'Straighten (0°)',onclick:()=>apply(p=>p.rot=0),text:'0°'}))));
       body.append(el('p',{class:'hint',text:'You can also rotate on the canvas: drag just outside any corner, or the round handle above the box. Hold Shift to snap to 15°.'}));
     }
-    body.append(el('div',{class:'prow'},el('span',{class:'k',text:'Grid area'}),el('span',{class:'v',text:E.gridCell(b,curFrame.w,curFrame.h)})));
-    if(!isBg(L))body.append(el('div',{class:'prow'},el('span',{class:'k',text:'Scale'}),el('div',{class:'pair'},
+    body.append(el('div',{class:'prow'},el('span',{class:'k',text:'Grid area'}),el('div',{class:'gridrow'},el('span',{class:'v',text:pl.cell?cellName(pl.cell):E.gridCell(b,curFrame.w,curFrame.h)}),gridPicker(L,pl,b),el('small',{class:'hint',text:'Tap a cell, or drag across several, to place the asset there.'}))));
+    if(!isRef(L))body.append(el('div',{class:'prow'},el('span',{class:'k',text:'Scale'}),el('div',{class:'pair'},
       el('button',{class:'btn small',title:'Largest size that shows all of it inside the poster',onclick:()=>scaleToCanvas(L,'fit'),text:'Scale to fit'}),
       el('button',{class:'btn small',title:'Smallest size that covers the whole poster',onclick:()=>scaleToCanvas(L,'fill'),text:'Scale to fill'}))));
-    if(fillSw)body.append(fillSw);
     if(!isBg(L)){
       const tog=(key,label,hint)=>{const i=el('input',{type:'checkbox',role:'switch',checked:!!UI[key]});i.addEventListener('change',()=>{UI[key]=i.checked;saveUI();});
         return el('label',{class:'switch',title:hint},i,el('span',{class:'track','aria-hidden':'true'}),el('span',{text:label}));};
@@ -1852,7 +1977,7 @@ function renderStatus(){
   const rk=P.activeRatio,r=ratioBy(rk),n=ovCount(rk);
   $('#statusbar').innerHTML='';
   $('#statusbar').append(el('span',{},el('b',{text:r.name}),` ${r.w}:${r.h}`),el('span',{text:rk===P.baseRatio?'base layout':`${n} custom position${n===1?'':'s'}`}),
-    el('span',{text:`edits: ${scope==='shared'?'all layouts':r.name+' only'}`}),el('span',{class:'sp'}),
+    el('span',{class:'sp'}),
     el('span',{text:`${P.layers.filter(L=>!isRef(L)).length} asset${P.layers.filter(L=>!isRef(L)).length===1?'':'s'} · ${P.layers.filter(isRef).length} ref`}),
     el('span',{text:`${Math.round(viewZoom*100)}% zoom`}));
 }
@@ -1889,7 +2014,7 @@ function refreshAll(){if(typeof clampPan==='function'&&SW){clampPan();curFrame=f
 $('#docname').addEventListener('change',e=>{const v=e.target.value.trim()||'Untitled poster';P.meta.name=v;markDirty();});
 $('#docname').addEventListener('keydown',e=>{if(e.key==='Enter')e.target.blur();e.stopPropagation();});
 $('#btnImport').title=`Import images (${MOD}I)`;
-$('#btnImport').onclick=()=>importAssetsFlow();$('#btnText').onclick=()=>addTextLayer();
+$('#btnImport').onclick=()=>importAssetsFlow();$('#btnText').onclick=()=>{if(pen)endDraw();addTextLayer();};$('#btnDraw').onclick=()=>pen?endDraw():startDraw(null);
 $('#lFront').innerHTML=icon('front');$('#lFwd').innerHTML=icon('forward');$('#lBack').innerHTML=icon('backward');$('#lBottom').innerHTML=icon('back');$('#lDup').innerHTML=icon('dup');$('#lDel').innerHTML=icon('trash');
 $('#lFront').onclick=()=>arrange('front');$('#lFwd').onclick=()=>arrange('forward');$('#lBack').onclick=()=>arrange('backward');$('#lBottom').onclick=()=>arrange('back');$('#lDup').onclick=duplicateSelected;$('#lDel').onclick=deleteSelected;
 function toggleSnap(){setUI({snap:UI.snap===false});toast(UI.snap?'Sticky guides on':'Sticky guides off');}
@@ -1980,14 +2105,14 @@ function customRatioDialog(existing){
       c();
       edit(()=>{
         if(r0){r0.name=name.value.trim()||r0.name;r0.w=nice?a:w;r0.h=nice?b:h;r0.px={w,h};}
-        else{const r={key:uid('custom'),name:name.value.trim()||`Custom ${ratioText()}`,w:nice?a:w,h:nice?b:h,px:{w,h},custom:true};P.ratios.push(r);P.activeRatio=r.key;scope=autoScope(r.key);}
+        else{const r={key:uid('custom'),name:name.value.trim()||`Custom ${ratioText()}`,w:nice?a:w,h:nice?b:h,px:{w,h},custom:true};P.ratios.push(r);P.activeRatio=r.key;}
       },{animate:true});
     }}]});
 }
 async function removeCustom(){
   const r=ratioBy(P.activeRatio);if(!r.custom)return;
   if(!await confirmModal(`Remove ${r.name}?`,'Its layout-specific positions are removed too. You can undo this.','Remove','danger'))return;
-  edit(()=>{P.ratios=P.ratios.filter(x=>x!==r);delete P.layouts.overrides[r.key];delete P.layouts.meta[r.key];P.activeRatio=P.baseRatio;scope=autoScope(P.activeRatio);});
+  edit(()=>{P.ratios=P.ratios.filter(x=>x!==r);delete P.layouts.overrides[r.key];delete P.layouts.meta[r.key];P.activeRatio=P.baseRatio;});
 }
 
 /* =====================================================================
@@ -2447,8 +2572,8 @@ async function runAutomate(opt,progress){
   const rep=[],frac=(f,t)=>progress(f,t);let created_refs=[];
   // Reference posters: when none are marked, an opaque image that contains your other artwork is treated as one.
   if(!P.layers.some(isRef)){
-    const opq=P.layers.filter(L=>L.type!=='text'&&L.catAuto!==false&&L.category!=='background'&&!L.locked&&assetOf(L).stats.opaque>.97);
-    const art=P.layers.filter(L=>L.type!=='text'&&assetOf(L).stats.transparent>.03).sort((a,b)=>assetOf(b).w*assetOf(b).h-assetOf(a).w*assetOf(a).h).slice(0,3);
+    const opq=P.layers.filter(L=>isImg(L)&&L.catAuto!==false&&L.category!=='background'&&!L.locked&&assetOf(L).stats.opaque>.97);
+    const art=P.layers.filter(L=>isImg(L)&&assetOf(L).stats.transparent>.03).sort((a,b)=>assetOf(b).w*assetOf(b).h-assetOf(a).w*assetOf(a).h).slice(0,3);
     if(opq.length&&art.length){const found=[];
       for(const [i,R] of opq.entries()){progress(.02+.03*i/opq.length,`Checking whether ${R.name} is a reference poster`);const RA=assetOf(R);let hits=0;
         for(const L of art){const m=await locateAsset(getImg(RA.id),RA,L);if(m&&m.quality==='good'){hits++;break;}}
@@ -2470,14 +2595,14 @@ async function runAutomate(opt,progress){
     if(only&&nonRef.some(L=>!L.locked&&!only.has(L.id)))rep.push(['',`Automating only the selected layer${only.size>1?'s':''}: ${P.layers.filter(L=>only.has(L.id)&&!isRef(L)).map(L=>`<b>${esc(L.name)}</b>`).join(', ')}`]);
     const userBg=nonRef.find(L=>isBg(L)&&!isStarter(L)&&(!L.catAuto||!inScope(L)));   // the plain starter background doesn't count
     if(userBg)rep.push(['',`<b>${esc(userBg.name)}</b> is the background (set by you)`]);
-    else{const cands=nonRef.filter(L=>inScope(L)&&L.type!=='text'),maxA=Math.max(...cands.map(L=>assetOf(L).w*assetOf(L).h));
+    else{const cands=nonRef.filter(L=>inScope(L)&&isImg(L)),maxA=Math.max(...cands.map(L=>assetOf(L).w*assetOf(L).h));
       const sc=L=>{const a=assetOf(L);return (BG_RX.test(L.name)?3:0)+(a.stats.opaque>.97?2:0)+(a.w*a.h)/maxA;};
       const cand=cands.slice().sort((a,b)=>sc(b)-sc(a))[0];
       cands.forEach(L=>{if(L.catAuto&&isBg(L))L.category='other';});
       if(cand&&sc(cand)>=2.2&&cand.catAuto){cand.category='background';rep.push(['',`<b>${esc(cand.name)}</b> → Background (${a2(cand)})`]);}
       else rep.push(['','No clear background found. Mark one in the Layers panel if you have one.']);}
   }
-  let bgs=nonRef.filter(L=>isBg(L)&&inScope(L));const bgL=bgs[0];let items=nonRef.filter(L=>!isBg(L)&&inScope(L)&&L.type!=='text');
+  let bgs=nonRef.filter(L=>isBg(L)&&inScope(L));const bgL=bgs[0];let items=nonRef.filter(L=>!isBg(L)&&inScope(L)&&isImg(L));
   // 2. Reference analysis
   const refData=[];
   for(let i=0;i<refs.length;i++){frac(.05+.6*i/refs.length,`Analysing ${refs[i].name}`);
@@ -2612,7 +2737,7 @@ async function startAutomate(opt){
     if(err&&err.cancelled){m.close();toast('Automate cancelled. Nothing was changed.');return;}
     console.error(err);m.body.innerHTML='';m.body.append(el('p',{text:`Automate stopped: ${err.message}. Nothing was changed.`}));m.setActions([{label:'Close',onClick:c=>c()}]);return;}
   if(snap()!==before)pushUndo(before);
-  scope=autoScope(P.activeRatio);refreshAll();animateFrom(d,700);
+  refreshAll();animateFrom(d,700);
   m.body.innerHTML='';
   m.body.append(el('p',{text:'Every layout has been generated. Adjust anything by hand; moves in a non-base layout stay in that layout.'}),
     el('div',{class:'report'},...rep.map(([k,h])=>el('div',{class:k,html:h}))));
@@ -2620,7 +2745,7 @@ async function startAutomate(opt){
 }
 /* Asked right after imports once the project has both reference posters and assets. */
 function askAutomate(){
-  if(P.layers.filter(L=>L.type!=='text'&&!isStarter(L)).length<2)return;
+  if(P.layers.filter(L=>isImg(L)&&!isStarter(L)).length<2)return;
   const manual=P.ratios.some(r=>P.layouts.meta[r.key]&&P.layouts.meta[r.key].manual);
   const only=selectedAssets(),all=P.layers.filter(L=>!isRef(L)).length;
   modal({title:'Apply Automate?',body:[el('p',{class:'ask',text:'Would you like to apply the automate function?'}),
@@ -2780,8 +2905,9 @@ async function loadProjectObject(obj,resolver){
     np.assets[rec.id]={id:rec.id,name:rec.name,w:rec.w||img.naturalWidth,h:rec.h||img.naturalHeight,data,thumb:makeThumb(img),stats:rec.stats||computeStats(img)};imgs.set(rec.id,img);
   }
   np.layers=np.layers.filter(L=>np.assets[L.assetId]);
+  {const strip=q=>{if(q){delete q.span;delete q.snapX;delete q.snapY;}};for(const id in np.layouts.shared)strip(np.layouts.shared[id]);for(const k in np.layouts.overrides)for(const id in np.layouts.overrides[k])strip(np.layouts.overrides[k][id]);}
   for(const L of np.layers)if(L.category==='reference'&&!(obj.version>=2)){np.layouts.shared[L.id]={ax:.5,ay:.5,s:1,rot:0,zoom:1,show:true};for(const rk in np.layouts.overrides)delete np.layouts.overrides[rk][L.id];}
-  P=np;projectHandle=null;IMG.clear();imgs.forEach((v,k)=>IMG.set(k,v));HIST.undo.length=HIST.redo.length=0;sel.clear();scope=autoScope(P.activeRatio);
+  P=np;projectHandle=null;IMG.clear();imgs.forEach((v,k)=>IMG.set(k,v));HIST.undo.length=HIST.redo.length=0;sel.clear();
   // Older projects had a canvas colour. Posters are now transparent, so that colour becomes a locked background layer.
   {const cc=P.settings.canvasColor;if(cc&&cc!=='transparent'){P.settings.canvasColor=null;const L=addSolidBackground(P,cc);L.starter=false;}}
   if(previewMode)setPreviewMode(false);refreshAll();
@@ -2922,7 +3048,7 @@ async function quitApp(){
     if(choice==='save'){const r=await saveProject(false);if(r!=='saved'){toast('Still open: the project wasn’t saved, so nothing was closed');return;}}
   }
   clearTimeout(asTimer);
-  IMG.clear();P=freshProject();projectHandle=null;HIST.undo.length=HIST.redo.length=0;sel.clear();scope='shared';dirty=false;lastSavedName=null;
+  IMG.clear();P=freshProject();projectHandle=null;HIST.undo.length=HIST.redo.length=0;sel.clear();dirty=false;lastSavedName=null;
   if(previewMode)setPreviewMode(false);refreshAll();
   showQuitScreen();
   try{window.close();}catch(e){}
@@ -2941,7 +3067,7 @@ function showQuitScreen(){
 }
 async function newDocument(){
   if(dirty&&hasContent()&&!await confirmModal('Start a new document?','Unsaved changes in this project will be lost. Your last session stays in this browser’s autosave.','Start new'))return;
-  IMG.clear();P=freshProject();projectHandle=null;HIST.undo.length=HIST.redo.length=0;sel.clear();scope='shared';dirty=false;lastSavedName=null;
+  IMG.clear();P=freshProject();projectHandle=null;HIST.undo.length=HIST.redo.length=0;sel.clear();dirty=false;lastSavedName=null;
   if(previewMode)setPreviewMode(false);refreshAll();renderSaveState();
   newProjectModal();
 }
@@ -2996,7 +3122,7 @@ async function loadSample(){
     const rc=canvasOf(W,H);E.render(rc.getContext('2d'),tmp,'x',W,H,getImg,{});return add(rc,name,'reference',false);};
   await refPoster(1200,1800,{[bg.id]:{ax:.62,ay:.5,zoom:1.08,s:1,rot:0},[logo.id]:{ax:.5,ay:.17,s:.52,rot:0},[lan.id]:{ax:.9,ay:.56,s:.3,rot:0},[badge.id]:{ax:.5,ay:.92,s:.25,rot:0}},'reference-portrait.jpg');
   await refPoster(1920,1080,{[bg.id]:{ax:.5,ay:.6,zoom:1,s:1,rot:0},[logo.id]:{ax:.07,ay:.33,s:.45,rot:-3},[lan.id]:{ax:.86,ay:.4,s:.34,rot:0},[badge.id]:{ax:.1,ay:.8,s:.24,rot:0}},'reference-landscape.jpg');
-  P.baseRatio='portrait';P.activeRatio='portrait';scope='shared';
+  P.baseRatio='portrait';P.activeRatio='portrait';
   await runAutomate({classify:true,preserve:false},()=>{});
   P.layers.filter(isRef).forEach(L=>L.visible=false);
   sel.clear();dirty=false;lastSavedName=null;HIST.undo.length=HIST.redo.length=0;
@@ -3041,13 +3167,478 @@ function runSplash(){
 }
 
 /* =====================================================================
+   DRAWING LAYERS
+   A drawing layer keeps its strokes (in its own drawing units, ~poster pixels at 2400 px) and is redrawn into a
+   PNG cropped tight to the paint, so its box hugs the drawing and it scales, rotates and exports like any image.
+   ===================================================================== */
+let pen=null;   // drawing mode: {L: the drawing layer (null until the first stroke of a new one), live, hover}
+const BRUSH={size:24,color:'#000000',eraser:false};
+try{Object.assign(BRUSH,JSON.parse(localStorage.getItem('up-brush')||'{}'));}catch(e){}
+function saveBrush(){try{localStorage.setItem('up-brush',JSON.stringify(BRUSH));}catch(e){}}
+function canvasAsset(c,name){
+  c.naturalWidth=c.width;c.naturalHeight=c.height;const data=c.toDataURL('image/png'),id=uid('ast');
+  P.assets[id]={id,name,w:c.width,h:c.height,data,thumb:makeThumb(c),stats:computeStats(c)};IMG.set(id,c);return P.assets[id];
+}
+function alphaCrop(c){
+  const d=c.getContext('2d').getImageData(0,0,c.width,c.height).data;let x0=c.width,y0=c.height,x1=-1,y1=-1;
+  for(let y=0;y<c.height;y++){const row=y*c.width*4;for(let x=0;x<c.width;x++)if(d[row+x*4+3]){if(x<x0)x0=x;if(x>x1)x1=x;if(y<y0)y0=y;if(y>y1)y1=y;}}
+  if(x1<0)return null;const o=canvasOf(x1-x0+1,y1-y0+1);o.getContext('2d').drawImage(c,-x0,-y0);return {c:o,x:x0,y:y0};
+}
+function strokePath(x,s,ox,oy,r){
+  const p=s.p,n=p.length/2,X=i=>(p[2*i]-ox)*r,Y=i=>(p[2*i+1]-oy)*r;
+  x.globalCompositeOperation=s.e?'destination-out':'source-over';x.strokeStyle=x.fillStyle=s.e?'#000':s.c;
+  x.lineCap='round';x.lineJoin='round';x.lineWidth=Math.max(.5,s.w*r);
+  if(n===1){x.beginPath();x.arc(X(0),Y(0),Math.max(.25,s.w*r/2),0,Math.PI*2);x.fill();return;}
+  x.beginPath();x.moveTo(X(0),Y(0));
+  for(let i=1;i<n-1;i++)x.quadraticCurveTo(X(i),Y(i),(X(i)+X(i+1))/2,(Y(i)+Y(i+1))/2);
+  x.lineTo(X(n-1),Y(n-1));x.stroke();
+}
+function rasterDrawing(d){
+  let x0=Infinity,y0=Infinity,x1=-Infinity,y1=-Infinity;
+  for(const s of d.strokes){if(s.e)continue;const m=s.w/2+2;for(let i=0;i<s.p.length;i+=2){const x=s.p[i],y=s.p[i+1];x0=Math.min(x0,x-m);y0=Math.min(y0,y-m);x1=Math.max(x1,x+m);y1=Math.max(y1,y+m);}}
+  if(x0===Infinity)return null;
+  const r=Math.min(1,4096/Math.max(x1-x0,y1-y0)),c=canvasOf(Math.max(1,Math.ceil((x1-x0)*r)),Math.max(1,Math.ceil((y1-y0)*r))),x=c.getContext('2d');
+  for(const s of d.strokes)strokePath(x,s,x0,y0,r);
+  const cr=alphaCrop(c);if(!cr)return null;   // crop to what is actually painted (the eraser can take parts away)
+  return {canvas:cr.c,ox:x0+cr.x/r,oy:y0+cr.y/r,r};
+}
+/* Swap a layer's image for one that shows only part of it (a sub-rectangle of the old image, in its pixels),
+   keeping it exactly where it is on screen in every layout. Used by drawing and cut-outs. */
+function reanchor(L,oldA,newA,rect,newCat){
+  const from=L.category,to=newCat||from;
+  const conv=(pl,rk)=>{const As=aspectOf(rk),W=1000*Math.sqrt(As),H=1000/Math.sqrt(As);
+    const b=E.box({...L,category:from},oldA,pl,W,H),kx=b.w/oldA.w,ky=b.h/oldA.h,r=(b.rot||0)*Math.PI/180;
+    const ox=(rect.x+rect.w/2-oldA.w/2)*kx,oy=(rect.y+rect.h/2-oldA.h/2)*ky,nw=rect.w*kx,nh=rect.h*ky;
+    const cx=b.x+b.w/2+ox*Math.cos(r)-oy*Math.sin(r),cy=b.y+b.h/2+ox*Math.sin(r)+oy*Math.cos(r);
+    return E.fromBox({...L,category:to},newA,{x:cx-nw/2,y:cy-nh/2,w:nw,h:nh,rot:b.rot||0},W,H,pl);};
+  const sh=P.layouts.shared[L.id];if(sh)P.layouts.shared[L.id]=conv(sh,P.baseRatio);
+  for(const rk in P.layouts.overrides){const o=P.layouts.overrides[rk][L.id];if(o)P.layouts.overrides[rk][L.id]=conv(o,rk);}
+  L.assetId=newA.id;L.category=to;
+}
+// From a point on the canvas (poster frame coordinates) into a layer's own image pixels
+function layerMapper(L){
+  const A=assetOf(L),b=boxOf(L),kx=b.w/A.w,ky=b.h/A.h,r=(b.rot||0)*Math.PI/180,c=Math.cos(r),s=Math.sin(r),cx=b.x+b.w/2,cy=b.y+b.h/2;
+  return {kx,ky,to:p=>{const dx=p.x-cx,dy=p.y-cy;return [(dx*c+dy*s)/kx+A.w/2,(-dx*s+dy*c)/ky+A.h/2];}};
+}
+function penMap(){
+  if(!pen.L){const k=2400/Math.max(curFrame.w,curFrame.h);return {k,to:p=>[p.x*k,p.y*k]};}
+  const d=pen.L.draw,m=layerMapper(pen.L);
+  return {k:1/(m.kx*d.r),to:p=>{const u=m.to(p);return [u[0]/d.r+d.ox,u[1]/d.r+d.oy];}};
+}
+function startDraw(L){
+  if(textEdit)finishTextEdit();if(cut)endCut(true);
+  if(L&&(L.type!=='draw'||!selectable(L)))L=null;
+  pen={L:L||null,live:null,hover:null};if(L)sel=new Set([L.id]);else sel.clear();
+  cv.style.cursor='crosshair';
+  if(UI.dockCollapsed||UI.pane!=='props')setUI({pane:'props',dockCollapsed:false,propsCollapsed:false});
+  refreshSelection();
+  toast(L?`Drawing on ${L.name}. Press Done or Esc when you’re finished.`:'Draw on the poster. Your strokes go on a new drawing layer. Press Done or Esc when you’re finished.');
+}
+function endDraw(){if(!pen)return;pen=null;cv.style.cursor='default';refreshSelection();}
+function penDown(p){
+  if(BRUSH.eraser&&!pen.L)return toast('Nothing to erase yet: draw something first');
+  const m=penMap(),w=Math.max(.5,BRUSH.size*m.k*Math.max(curFrame.w,curFrame.h)/2400);
+  pen.live={m,pts:[p],w,c:BRUSH.color,e:!!BRUSH.eraser};requestDraw();
+}
+function penMove(p){const lv=pen.live;if(!lv)return;const q=lv.pts[lv.pts.length-1];if(Math.hypot(p.x-q.x,p.y-q.y)>=1.5){lv.pts.push(p);requestDraw();}}
+function penUp(){
+  const lv=pen.live;pen.live=null;if(!lv)return;
+  const pts=[];for(const q of lv.pts){const d=lv.m.to(q);pts.push(+d[0].toFixed(2),+d[1].toFixed(2));}
+  const stroke={c:lv.c,w:+lv.w.toFixed(2),e:lv.e,p:pts};
+  if(!pen.L){
+    const d={strokes:[stroke],ox:0,oy:0,r:1},R=rasterDrawing(d);if(!R)return requestDraw();
+    edit(()=>{
+      const A=canvasAsset(R.canvas,'drawing.png');d.ox=R.ox;d.oy=R.oy;d.r=R.r;
+      const n=P.layers.filter(x=>x.type==='draw').length+1,k=lv.m.k;
+      const L={id:uid('lay'),assetId:A.id,name:`Drawing ${n}`,nameAuto:false,type:'draw',draw:d,category:'other',catAuto:false,visible:true,opacity:1};
+      insertLayer(L);
+      P.layouts.shared[L.id]=E.fromBox(L,A,{x:R.ox/k,y:R.oy/k,w:A.w/(R.r*k),h:A.h/(R.r*k),rot:0},curFrame.w,curFrame.h,{ax:.5,ay:.5,s:.3,rot:0,zoom:1,show:true});
+      pen.L=L;sel=new Set([L.id]);
+    },{animate:false});
+    return;
+  }
+  const L=pen.L,oldA=assetOf(L),od=L.draw,nd={strokes:[...od.strokes,stroke],ox:od.ox,oy:od.oy,r:od.r},R=rasterDrawing(nd);
+  edit(()=>{
+    if(!R){   // everything was erased: the layer goes (Undo brings it back)
+      P.layers=P.layers.filter(x=>x!==L);delete P.layouts.shared[L.id];for(const rk in P.layouts.overrides)delete P.layouts.overrides[rk][L.id];sel.clear();pen.L=null;return;}
+    const A=canvasAsset(R.canvas,'drawing.png');
+    reanchor(L,oldA,A,{x:(R.ox-od.ox)*od.r,y:(R.oy-od.oy)*od.r,w:A.w/R.r*od.r,h:A.h/R.r*od.r});
+    L.draw={strokes:nd.strokes,ox:R.ox,oy:R.oy,r:R.r};
+  },{animate:false});
+}
+const SWATCHES=['#000000','#ffffff','#ff3b30','#ff9500','#ffcc00','#34c759','#007aff','#af52de'];
+function brushPanel(L){
+  const wrap=el('div',{class:'brush'});
+  wrap.append(el('div',{class:'prow'},el('span',{class:'k',text:'Brush'}),
+    pen?el('button',{class:'btn small primary',onclick:endDraw,text:'Done drawing'})
+       :el('button',{class:'btn small',onclick:()=>startDraw(L),text:'Draw on this layer'})));
+  const rng=el('input',{type:'range',min:1,max:300,step:1,value:BRUSH.size,'aria-label':'Brush size'});
+  const num=el('input',{type:'number',min:1,max:300,step:1,value:BRUSH.size,'aria-label':'Brush size in pixels',class:'bnum'});
+  const setSize=v=>{v=clamp(Math.round(+v||1),1,300);BRUSH.size=v;rng.value=v;num.value=v;saveBrush();requestDraw();};
+  rng.addEventListener('input',()=>setSize(rng.value));num.addEventListener('change',()=>setSize(num.value));num.addEventListener('keydown',e=>e.stopPropagation());
+  wrap.append(el('div',{class:'prow'},el('span',{class:'k',text:'Size'}),el('div',{class:'rotrow'},rng,num,el('span',{class:'v',text:'px'}))));
+  const col=el('input',{type:'color',value:BRUSH.color,'aria-label':'Brush colour'});
+  const sw=el('div',{class:'swatches'},...SWATCHES.map(c=>el('button',{class:'swatch'+(c===BRUSH.color?' on':''),style:`background:${c}`,title:c,'aria-label':`Colour ${c}`,onclick:()=>setCol(c)})));
+  const setCol=c=>{BRUSH.color=c;col.value=c;BRUSH.eraser=false;er.checked=false;sw.querySelectorAll('.swatch').forEach(b=>b.classList.toggle('on',b.title===c));saveBrush();requestDraw();};
+  col.addEventListener('input',()=>setCol(col.value));
+  wrap.append(el('div',{class:'prow'},el('span',{class:'k',text:'Colour'}),el('div',{class:'colorrow'},col,sw)));
+  const er=el('input',{type:'checkbox',role:'switch',checked:!!BRUSH.eraser});er.addEventListener('change',()=>{BRUSH.eraser=er.checked;saveBrush();requestDraw();});
+  wrap.append(el('label',{class:'switch'},er,el('span',{class:'track','aria-hidden':'true'}),el('span',{text:'Eraser'})));
+  wrap.append(el('p',{class:'hint',text:pen?'Draw on the poster with the mouse, a pen or your finger. Two fingers still pinch to zoom. Each stroke can be undone.':'Double-click the drawing on the canvas to draw on it again.'}));
+  return wrap;
+}
+
+/* =====================================================================
+   CUT-OUTS: the lasso tool and Remove Background
+   Colour models of what to keep and what to remove, a graph cut that follows the edges in the picture
+   (GrabCut), then a full-resolution pass that softens the edge along the real outline.
+   ===================================================================== */
+function imgPixels(img,maxSide){
+  const w0=img.naturalWidth||img.width,h0=img.naturalHeight||img.height,k=Math.min(1,maxSide/Math.max(w0,h0));
+  const w=Math.max(1,Math.round(w0*k)),h=Math.max(1,Math.round(h0*k)),c=canvasOf(w,h),x=c.getContext('2d',{willReadFrequently:true});
+  x.imageSmoothingQuality='high';x.drawImage(img,0,0,w,h);return {w,h,k:w/w0,d:x.getImageData(0,0,w,h).data};
+}
+function gmmFit(d,idx,K){
+  const n=idx.length;if(!n)return null;const S=Math.min(n,5000),X=new Float32Array(S*3);
+  for(let i=0;i<S;i++){const p=idx[Math.floor((i+.5)*n/S)]*4;X[i*3]=d[p];X[i*3+1]=d[p+1];X[i*3+2]=d[p+2];}
+  K=Math.min(K,S);const C=new Float32Array(K*3),dist=new Float32Array(S).fill(1e30),lab=new Int32Array(S);
+  const d2=(i,k)=>{const a=X[i*3]-C[k*3],b=X[i*3+1]-C[k*3+1],c=X[i*3+2]-C[k*3+2];return a*a+b*b+c*c;};
+  C[0]=X[0];C[1]=X[1];C[2]=X[2];
+  for(let k=1;k<K;k++){let bi=0,bd=-1;for(let i=0;i<S;i++){const v=d2(i,k-1);if(v<dist[i])dist[i]=v;if(dist[i]>bd){bd=dist[i];bi=i;}}C[k*3]=X[bi*3];C[k*3+1]=X[bi*3+1];C[k*3+2]=X[bi*3+2];}
+  for(let it=0;it<10;it++){
+    const sum=new Float64Array(K*3),cnt=new Float64Array(K);
+    for(let i=0;i<S;i++){let bk=0,bd=1e30;for(let k=0;k<K;k++){const v=d2(i,k);if(v<bd){bd=v;bk=k;}}lab[i]=bk;cnt[bk]++;sum[bk*3]+=X[i*3];sum[bk*3+1]+=X[i*3+1];sum[bk*3+2]+=X[i*3+2];}
+    for(let k=0;k<K;k++)if(cnt[k]){C[k*3]=sum[k*3]/cnt[k];C[k*3+1]=sum[k*3+1]/cnt[k];C[k*3+2]=sum[k*3+2]/cnt[k];}
+  }
+  const comps=[];
+  for(let k=0;k<K;k++){
+    let c=0;const m=[C[k*3],C[k*3+1],C[k*3+2]],v=[0,0,0,0,0,0];
+    for(let i=0;i<S;i++)if(lab[i]===k){c++;const a=X[i*3]-m[0],b=X[i*3+1]-m[1],e=X[i*3+2]-m[2];v[0]+=a*a;v[1]+=a*b;v[2]+=a*e;v[3]+=b*b;v[4]+=b*e;v[5]+=e*e;}
+    if(c<2)continue;
+    const R=12,s00=v[0]/c+R,s01=v[1]/c,s02=v[2]/c,s11=v[3]/c+R,s12=v[4]/c,s22=v[5]/c+R;
+    const c00=s11*s22-s12*s12,c01=s02*s12-s01*s22,c02=s01*s12-s02*s11,det=s00*c00+s01*c01+s02*c02;if(!(det>0))continue;
+    comps.push({m0:m[0],m1:m[1],m2:m[2],i00:c00/det,i01:c01/det,i02:c02/det,i11:(s00*s22-s02*s02)/det,i12:(s01*s02-s00*s12)/det,i22:(s00*s11-s01*s01)/det,
+      ln:Math.log(c/S)-0.5*Math.log(Math.pow(2*Math.PI,3)*det)});
+  }
+  return comps.length?comps:null;
+}
+function gmmNLL(g,r,gg,b){
+  let s=0;for(const c of g){const x=r-c.m0,y=gg-c.m1,z=b-c.m2;
+    s+=Math.exp(c.ln-0.5*(x*(c.i00*x+c.i01*y+c.i02*z)+y*(c.i01*x+c.i11*y+c.i12*z)+z*(c.i02*x+c.i12*y+c.i22*z)));}
+  return Math.min(80,-Math.log(s+1e-35));
+}
+// 8-connected pixel grid; edge weights follow colour contrast so cuts run along edges in the picture
+function buildGrid(d,w,h,gamma){
+  const n=w*h,nb=[[1,0,1],[0,1,1],[1,1,Math.SQRT1_2],[-1,1,Math.SQRT1_2]];
+  let E2=0;for(const [dx,dy] of nb)E2+=(w-Math.abs(dx))*(h-dy);
+  const head=new Int32Array(2*E2),nxt=new Int32Array(2*E2),first=new Int32Array(n).fill(-1),cap=new Float64Array(2*E2),df=new Float32Array(E2),uu=new Int32Array(E2),vv=new Int32Array(E2),wd=new Float32Array(E2);
+  let e=0,sum=0;
+  for(const [dx,dy,wt] of nb)for(let y=0;y<h-dy;y++)for(let x=Math.max(0,-dx);x<w-Math.max(0,dx);x++){
+    const u=y*w+x,v=(y+dy)*w+x+dx,a=u*4,b=v*4,r=d[a]-d[b],g=d[a+1]-d[b+1],bl=d[a+2]-d[b+2];df[e]=r*r+g*g+bl*bl;sum+=df[e];uu[e]=u;vv[e]=v;wd[e]=wt;e++;}
+  const beta=1/(2*Math.max(1e-6,sum/e));
+  for(let i=0;i<e;i++){const a=2*i,u=uu[i],v=vv[i],c=gamma*wd[i]*Math.exp(-beta*df[i]);
+    head[a]=v;nxt[a]=first[u];first[u]=a;head[a+1]=u;nxt[a+1]=first[v];first[v]=a+1;cap[a]=cap[a+1]=c;}
+  return {n,head,nxt,first,cap};
+}
+// Boykov–Kolmogorov max-flow. Returns 1 for pixels on the "keep" (source) side.
+function bkMaxflow(G,tr){
+  const {n,head,nxt,first}=G,rc=Float64Array.from(G.cap),TERM=-2,ORPH=-3,NONE=-1,INF=1e9;
+  const parent=new Int32Array(n).fill(NONE),tree=new Uint8Array(n),dist=new Int32Array(n),ts=new Int32Array(n),inQ=new Uint8Array(n);
+  const Q=new Int32Array(n+1),QN=n+1;let qh=0,qt=0;const push=i=>{if(!inQ[i]){inQ[i]=1;Q[qt]=i;qt=(qt+1)%QN;}};
+  for(let i=0;i<n;i++){if(tr[i]>0){tree[i]=1;parent[i]=TERM;dist[i]=1;push(i);}else if(tr[i]<0){tree[i]=2;parent[i]=TERM;dist[i]=1;push(i);}}
+  let TIME=0;const orph=[];
+  while(qh!==qt){
+    const i=Q[qh];qh=(qh+1)%QN;inQ[i]=0;if(parent[i]===NONE)continue;
+    let m=-1;
+    if(tree[i]===1){for(let a=first[i];a>=0;a=nxt[a])if(rc[a]>0){const j=head[a];
+        if(!tree[j]){tree[j]=1;parent[j]=a^1;dist[j]=dist[i]+1;ts[j]=ts[i];push(j);}else if(tree[j]===2){m=a;break;}}}
+    else{for(let a=first[i];a>=0;a=nxt[a])if(rc[a^1]>0){const j=head[a];
+        if(!tree[j]){tree[j]=2;parent[j]=a^1;dist[j]=dist[i]+1;ts[j]=ts[i];push(j);}else if(tree[j]===1){m=a^1;break;}}}
+    if(m<0)continue;
+    push(i);TIME++;
+    // augment along source … u →(m)→ v … sink
+    const u=head[m^1],v=head[m];let b=rc[m],x;
+    for(x=u;parent[x]!==TERM;x=head[parent[x]]){const c=rc[parent[x]^1];if(c<b)b=c;}if(tr[x]<b)b=tr[x];
+    for(x=v;parent[x]!==TERM;x=head[parent[x]]){const c=rc[parent[x]];if(c<b)b=c;}if(-tr[x]<b)b=-tr[x];
+    rc[m]-=b;rc[m^1]+=b;
+    for(x=u;;){const a=parent[x];if(a===TERM)break;rc[a]+=b;rc[a^1]-=b;const nx=head[a];if(rc[a^1]<=1e-9){rc[a^1]=0;parent[x]=ORPH;orph.push(x);}x=nx;}
+    tr[x]-=b;if(tr[x]<=1e-9){tr[x]=0;parent[x]=ORPH;orph.push(x);}
+    for(x=v;;){const a=parent[x];if(a===TERM)break;rc[a^1]+=b;rc[a]-=b;const nx=head[a];if(rc[a]<=1e-9){rc[a]=0;parent[x]=ORPH;orph.push(x);}x=nx;}
+    tr[x]+=b;if(tr[x]>=-1e-9){tr[x]=0;parent[x]=ORPH;orph.push(x);}
+    // adoption
+    while(orph.length){
+      const i2=orph.pop(),t=tree[i2];let a0=NONE,dmin=INF;
+      for(let a=first[i2];a>=0;a=nxt[a]){
+        if(!(t===1?rc[a^1]>0:rc[a]>0))continue;const j=head[a];if(tree[j]!==t||parent[j]===NONE)continue;
+        let d=0,k=j;
+        for(;;){if(ts[k]===TIME){d+=dist[k];break;}const pa=parent[k];d++;if(pa===TERM){ts[k]=TIME;dist[k]=1;break;}if(pa===ORPH||pa===NONE){d=INF;break;}k=head[pa];}
+        if(d<INF){if(d<dmin){a0=a;dmin=d;}for(k=j;ts[k]!==TIME;k=head[parent[k]]){ts[k]=TIME;dist[k]=d;d--;}}
+      }
+      if(a0!==NONE){parent[i2]=a0;ts[i2]=TIME;dist[i2]=dmin+1;}
+      else{
+        for(let a=first[i2];a>=0;a=nxt[a]){const j=head[a];if(tree[j]!==t)continue;const pj=parent[j];if(pj===NONE)continue;
+          if(t===1?rc[a^1]>0:rc[a]>0)push(j);
+          if(pj!==TERM&&pj!==ORPH&&head[pj]===i2){parent[j]=ORPH;orph.push(j);}}
+        tree[i2]=0;parent[i2]=NONE;
+      }
+    }
+  }
+  const out=new Uint8Array(n);for(let i=0;i<n;i++)out[i]=tree[i]===1?1:0;return out;
+}
+// tri: 0 surely remove, 1 probably remove, 2 probably keep, 3 surely keep
+async function grabCut(px,tri,iters,tick,prior){
+  const {w,h,d}=px,n=w*h,G=buildGrid(d,w,h,50);let fg=new Uint8Array(n);for(let i=0;i<n;i++)fg[i]=tri[i]>=2?1:0;
+  for(let it=0;it<iters;it++){
+    let nf=0;for(let i=0;i<n;i++)nf+=fg[i];if(!nf||nf===n)break;
+    const fi=new Int32Array(nf),bi=new Int32Array(n-nf);let a=0,b=0;for(let i=0;i<n;i++){if(fg[i])fi[a++]=i;else bi[b++]=i;}
+    const gF=gmmFit(d,fi,5),gB=gmmFit(d,bi,5);if(!gF||!gB)break;
+    const tr=new Float64Array(n);
+    for(let i=0;i<n;i++){const t=tri[i];if(t===0){tr[i]=-1e7;continue;}if(t===3){tr[i]=1e7;continue;}const p=i*4;tr[i]=gmmNLL(gB,d[p],d[p+1],d[p+2])-gmmNLL(gF,d[p],d[p+1],d[p+2])+(prior?prior[i]:0);}
+    const cutm=bkMaxflow(G,tr);let ch=0;
+    for(let i=0;i<n;i++){const v=tri[i]===3?1:tri[i]===0?0:cutm[i];if(v!==fg[i])ch++;fg[i]=v;}
+    if(tick)await tick(it);if(ch<n*.0005)break;
+  }
+  return fg;
+}
+function labelComps(mask,w,h,val){
+  const n=w*h,lab=new Int32Array(n).fill(-1),sizes=[],stack=new Int32Array(n);
+  for(let s=0;s<n;s++){if(mask[s]!==val||lab[s]>=0)continue;const id=sizes.length;let sp=0,c=0;stack[sp++]=s;lab[s]=id;
+    while(sp){const i=stack[--sp];c++;const x=i%w,y=(i-x)/w;
+      if(x>0&&mask[i-1]===val&&lab[i-1]<0){lab[i-1]=id;stack[sp++]=i-1;}if(x<w-1&&mask[i+1]===val&&lab[i+1]<0){lab[i+1]=id;stack[sp++]=i+1;}
+      if(y>0&&mask[i-w]===val&&lab[i-w]<0){lab[i-w]=id;stack[sp++]=i-w;}if(y<h-1&&mask[i+w]===val&&lab[i+w]<0){lab[i+w]=id;stack[sp++]=i+w;}}
+    sizes.push(c);}
+  return {lab,sizes};
+}
+// Keep the object(s) asked for, drop stray specks, fill pinholes
+function cleanMask(fg,w,h,inside,px){
+  const n=w*h,{lab,sizes}=labelComps(fg,w,h,1);if(!sizes.length)return fg;
+  const keep=new Uint8Array(sizes.length);
+  if(inside){const ov=new Float64Array(sizes.length);for(let i=0;i<n;i++)if(lab[i]>=0&&inside[i])ov[lab[i]]++;
+    let best=-1;for(let c=0;c<sizes.length;c++)if(ov[c]>0&&(best<0||ov[c]>ov[best]))best=c;
+    for(let c=0;c<sizes.length;c++)if(c===best||(ov[c]>=.5*sizes[c]&&sizes[c]>=.01*sizes[best]))keep[c]=1;}
+  else{
+    // the subject: a good size, near the middle, with a crisp outline; scenery spanning the whole picture scores low
+    const K=sizes.length,ctr=new Float64Array(K),edg=new Float64Array(K),ne=new Float64Array(K),bx0=new Float64Array(K).fill(w),bx1=new Float64Array(K).fill(-1),by0=new Float64Array(K).fill(h),by1=new Float64Array(K).fill(-1),d=px.d;
+    for(let i=0;i<n;i++){const c=lab[i];if(c<0)continue;const x=i%w,y=(i-x)/w;ctr[c]+=1.4-Math.min(1,Math.hypot((x/w-.5)*2,(y/h-.5)*2));
+      if(x<bx0[c])bx0[c]=x;if(x>bx1[c])bx1[c]=x;if(y<by0[c])by0[c]=y;if(y>by1[c])by1[c]=y;
+      for(const j of [x>1?i-2:-1,x<w-2?i+2:-1,y>1?i-2*w:-1,y<h-2?i+2*w:-1])if(j>=0&&lab[j]!==c){const a=i*4,b=j*4;if(Math.abs(d[a]-d[b])+Math.abs(d[a+1]-d[b+1])+Math.abs(d[a+2]-d[b+2])>70)edg[c]++;ne[c]++;}}
+    const sc=new Float64Array(K);let best=0;
+    for(let c=0;c<K;c++){const span=Math.max((bx1[c]-bx0[c]+1)/w,(by1[c]-by0[c]+1)/h),crisp=ne[c]?edg[c]/ne[c]:0;   // share of the outline that is a clear edge
+      sc[c]=sizes[c]<n*.003?0:Math.sqrt(sizes[c])*(ctr[c]/sizes[c])*(.1+crisp)*(span>.9?.35:1);if(sc[c]>sc[best])best=c;}
+    const near=c=>!(bx0[c]>bx1[best]+.08*w||bx1[c]<bx0[best]-.08*w||by0[c]>by1[best]+.08*h||by1[c]<by0[best]-.08*h);
+    const cr=c=>ne[c]?edg[c]/ne[c]:0;
+    for(let c=0;c<K;c++)if(c===best||(near(c)&&(sc[c]>=.5*sc[best]||(sizes[c]>=.02*sizes[best]&&cr(c)>=.5))))keep[c]=1;}
+  const out=new Uint8Array(n);for(let i=0;i<n;i++)out[i]=lab[i]>=0&&keep[lab[i]]?1:0;
+  const holes=labelComps(out,w,h,0),edge=new Uint8Array(holes.sizes.length);
+  for(let x=0;x<w;x++){const a=holes.lab[x],b=holes.lab[(h-1)*w+x];if(a>=0)edge[a]=1;if(b>=0)edge[b]=1;}
+  for(let y=0;y<h;y++){const a=holes.lab[y*w],b=holes.lab[y*w+w-1];if(a>=0)edge[a]=1;if(b>=0)edge[b]=1;}
+  for(let i=0;i<n;i++){const c=holes.lab[i];if(c>=0&&!edge[c]&&holes.sizes[c]<n*.0015)out[i]=1;}
+  return out;
+}
+function chamfer(inside,w,h){
+  const n=w*h,D=new Float32Array(n);for(let i=0;i<n;i++)D[i]=inside[i]?0:1e9;const S=Math.SQRT2;
+  for(let y=0;y<h;y++)for(let x=0;x<w;x++){const i=y*w+x;let v=D[i];if(x>0)v=Math.min(v,D[i-1]+1);if(y>0){v=Math.min(v,D[i-w]+1);if(x>0)v=Math.min(v,D[i-w-1]+S);if(x<w-1)v=Math.min(v,D[i-w+1]+S);}D[i]=v;}
+  for(let y=h-1;y>=0;y--)for(let x=w-1;x>=0;x--){const i=y*w+x;let v=D[i];if(x<w-1)v=Math.min(v,D[i+1]+1);if(y<h-1){v=Math.min(v,D[i+w]+1);if(x<w-1)v=Math.min(v,D[i+w+1]+S);if(x>0)v=Math.min(v,D[i+w-1]+S);}D[i]=v;}
+  return D;
+}
+/* Lasso: inside the loop is probably the object, a band outside it may still be (in case the line cut through
+   the object), and everything further out is background. The colour models and edges sort out the rest. */
+function lassoTrimap(px,pts){
+  const {w,h,d}=px,n=w*h,c=canvasOf(w,h),x=c.getContext('2d',{willReadFrequently:true});
+  x.beginPath();pts.forEach(([a,b],i)=>i?x.lineTo(a,b):x.moveTo(a,b));x.closePath();x.fillStyle='#000';x.fill('nonzero');
+  const m=x.getImageData(0,0,w,h).data,inside=new Uint8Array(n);let cnt=0;for(let i=0;i<n;i++){inside[i]=m[i*4+3]>127?1:0;cnt+=inside[i];}
+  if(cnt<n*.002)return null;
+  const D=chamfer(inside,w,h),band=Math.max(3,Math.round(.07*Math.max(w,h))),tri=new Uint8Array(n);let bg=0;
+  for(let i=0;i<n;i++){tri[i]=inside[i]?2:D[i]<=band?1:0;if(d[i*4+3]<16)tri[i]=0;if(tri[i]===0)bg++;}
+  if(bg<n*.01){const t=autoTrimap(px);for(let i=0;i<n;i++)if(!inside[i])t.tri[i]=Math.min(t.tri[i],1);return {tri:t.tri,inside};}
+  const out=new Uint8Array(n);for(let i=0;i<n;i++)out[i]=inside[i]?0:1;
+  const Din=chamfer(out,w,h),reach=Math.max(3,.08*Math.max(w,h)),prior=new Float32Array(n);
+  for(let i=0;i<n;i++)if(inside[i])prior[i]=-1.2*Math.max(0,1-Din[i]/reach);
+  return {tri,inside,prior};
+}
+/* Automatic: the picture's border tells us what the background looks like. Whatever stands out from it,
+   in one connected piece, is the subject. Border pixels that look like background are surely background;
+   a subject that touches the edge of the picture is kept. */
+function solveLin(A,b){const n=b.length;for(let i=0;i<n;i++){let m=i;for(let r=i+1;r<n;r++)if(Math.abs(A[r][i])>Math.abs(A[m][i]))m=r;[A[i],A[m]]=[A[m],A[i]];[b[i],b[m]]=[b[m],b[i]];
+  const p=A[i][i]||1e-9;for(let r=i+1;r<n;r++){const f=A[r][i]/p;for(let c=i;c<n;c++)A[r][c]-=f*A[i][c];b[r]-=f*b[i];}}
+  const x=new Array(n).fill(0);for(let i=n-1;i>=0;i--){let v=b[i];for(let c=i+1;c<n;c++)v-=A[i][c]*x[c];x[i]=v/(A[i][i]||1e-9);}return x;}
+function autoTrimap(px){
+  const {w,h,d}=px,n=w*h,bw=Math.max(2,Math.round(.03*Math.min(w,h))),tri=new Uint8Array(n).fill(1);
+  const bord=[];for(let y=0;y<h;y++)for(let x=0;x<w;x++)if((x<bw||y<bw||x>=w-bw||y>=h-bw)&&d[(y*w+x)*4+3]>=16)bord.push(y*w+x);
+  // a smooth background (flat colour or a gradient) fitted to the border, so a studio sweep or sky counts as background
+  const F=(x,y)=>{const u=x/w-.5,v=y/h-.5;return [1,u,v,u*u,u*v,v*v];};let res=null,rt=0;
+  if(bord.length>20){const M=Array.from({length:6},()=>new Array(6).fill(0)),B=[0,1,2].map(()=>new Array(6).fill(0)),st=Math.max(1,Math.floor(bord.length/4000));
+    for(let k=0;k<bord.length;k+=st){const i=bord[k],x=i%w,y=(i-x)/w,f=F(x,y);for(let r=0;r<6;r++){for(let c=0;c<6;c++)M[r][c]+=f[r]*f[c];for(let ch=0;ch<3;ch++)B[ch][r]+=f[r]*d[i*4+ch];}}
+    for(let r=0;r<6;r++)M[r][r]+=1e-3;
+    const co=[0,1,2].map(ch=>solveLin(M.map(r=>r.slice()),B[ch].slice()));res=new Float32Array(n);
+    for(let i=0;i<n;i++){const x=i%w,y=(i-x)/w,f=F(x,y);let s2=0;for(let ch=0;ch<3;ch++){let pv=0;for(let r=0;r<6;r++)pv+=co[ch][r]*f[r];const e=d[i*4+ch]-pv;s2+=e*e;}res[i]=Math.sqrt(s2);}
+    const bv=bord.map(i=>res[i]).sort((a,b)=>a-b);rt=Math.max(20,bv[Math.floor(bv.length*.97)]*1.6);}
+  const g=bord.length?gmmFit(d,Int32Array.from(bord),5):null;
+  const nll=new Float32Array(n);if(g)for(let i=0;i<n;i++){const p=i*4;nll[i]=gmmNLL(g,d[p],d[p+1],d[p+2]);}
+  let t=0;if(g){const bv=bord.map(i=>nll[i]).sort((a,b)=>a-b);t=bv[Math.floor(bv.length*.95)]+1.5;}
+  let init=new Uint8Array(n);for(let i=0;i<n;i++)init[i]=d[i*4+3]>=16&&(!g||nll[i]>t)&&(!res||res[i]>rt)?1:0;
+  // the main connected piece(s), preferring the centre
+  const {lab,sizes}=labelComps(init,w,h,1);let area=0;
+  if(sizes.length){const sc=new Float64Array(sizes.length);
+    for(let i=0;i<n;i++)if(lab[i]>=0){const x=i%w,y=(i-x)/w,dx=(x/w-.5)*2,dy=(y/h-.5)*2;sc[lab[i]]+=1.5-Math.min(1,Math.hypot(dx,dy));}
+    let best=0;for(let c=1;c<sizes.length;c++)if(sc[c]>sc[best])best=c;
+    for(let i=0;i<n;i++){const c=lab[i];init[i]=c>=0&&(c===best||sc[c]>=.15*sc[best])?1:0;area+=init[i];}}
+  if(area<n*.01||area>n*.92){init=new Uint8Array(n);const mx=Math.round(w*.1),my=Math.round(h*.1);for(let y=my;y<h-my;y++)for(let x=mx;x<w-mx;x++)init[y*w+x]=1;}
+  for(let i=0;i<n;i++)tri[i]=init[i]?2:1;
+  if(g)for(const i of bord)if(nll[i]<=t&&!init[i])tri[i]=0;
+  for(let i=0;i<n;i++)if(d[i*4+3]<16)tri[i]=0;
+  // pixels that match the smooth background lean towards background in the cut
+  let prior=null;if(res){prior=new Float32Array(n);for(let i=0;i<n;i++)prior[i]=Math.max(-1.5,Math.min(1.5,(res[i]-rt)/rt*1.5));}
+  return {tri,inside:null,prior};
+}
+function boxMean(src,w,h,r){
+  const W=w+1,S=new Float64Array(W*(h+1)),out=new Float32Array(w*h);
+  for(let y=0;y<h;y++){let row=0;for(let x=0;x<w;x++){row+=src[y*w+x];S[(y+1)*W+x+1]=S[y*W+x+1]+row;}}
+  for(let y=0;y<h;y++){const y0=Math.max(0,y-r),y1=Math.min(h,y+r+1);for(let x=0;x<w;x++){const x0=Math.max(0,x-r),x1=Math.min(w,x+r+1);
+    out[y*w+x]=(S[y1*W+x1]-S[y0*W+x1]-S[y1*W+x0]+S[y0*W+x0])/((y1-y0)*(x1-x0));}}
+  return out;
+}
+/* Full-resolution edge: the rough mask is scaled up and snapped to the outline in the picture with a guided
+   filter, giving a clean, slightly soft edge. Returns the cut-out cropped tight, and where it sits in the image. */
+function refineCutout(img,fg,mw,mh){
+  const W0=img.naturalWidth||img.width,H0=img.naturalHeight||img.height,px=imgPixels(img,1400),{w,h,d}=px,n=w*h;
+  const I=new Float32Array(n),p=new Float32Array(n),sx=mw/w,sy=mh/h;
+  for(let y=0;y<h;y++){const fy=Math.min(mh-1,Math.max(0,(y+.5)*sy-.5)),y0=Math.floor(fy),y1=Math.min(mh-1,y0+1),ty=fy-y0;
+    for(let x=0;x<w;x++){const i=y*w+x,q=i*4;I[i]=(.299*d[q]+.587*d[q+1]+.114*d[q+2])/255;
+      const fx=Math.min(mw-1,Math.max(0,(x+.5)*sx-.5)),x0=Math.floor(fx),x1=Math.min(mw-1,x0+1),tx=fx-x0;
+      p[i]=(fg[y0*mw+x0]*(1-tx)+fg[y0*mw+x1]*tx)*(1-ty)+(fg[y1*mw+x0]*(1-tx)+fg[y1*mw+x1]*tx)*ty;}}
+  const r=Math.max(2,Math.ceil(1.5*w/mw)),eps=2e-3,II=new Float32Array(n),Ip=new Float32Array(n);
+  for(let i=0;i<n;i++){II[i]=I[i]*I[i];Ip[i]=I[i]*p[i];}
+  const mI=boxMean(I,w,h,r),mp=boxMean(p,w,h,r),mII=boxMean(II,w,h,r),mIp=boxMean(Ip,w,h,r),a=new Float32Array(n),b=new Float32Array(n);
+  for(let i=0;i<n;i++){const v=mII[i]-mI[i]*mI[i];a[i]=(mIp[i]-mI[i]*mp[i])/(v+eps);b[i]=mp[i]-a[i]*mI[i];}
+  const ma=boxMean(a,w,h,r),mb=boxMean(b,w,h,r);
+  const mc=canvasOf(w,h),mx=mc.getContext('2d'),md=mx.createImageData(w,h);let x0=w,y0=h,x1=-1,y1=-1;
+  for(let i=0;i<n;i++){let al=ma[i]*I[i]+mb[i];al=Math.min(1,Math.max(0,(al-.5)*1.35+.5))*(d[i*4+3]/255);
+    // keep the soft edge from spreading far beyond the rough mask
+    if(p[i]<.02)al=Math.min(al,.0);
+    const A8=Math.round(al*255);md.data[i*4]=md.data[i*4+1]=md.data[i*4+2]=255;md.data[i*4+3]=A8;
+    if(A8>2){const x=i%w,y=(i-x)/w;if(x<x0)x0=x;if(x>x1)x1=x;if(y<y0)y0=y;if(y>y1)y1=y;}}
+  if(x1<0)return null;mx.putImageData(md,0,0);
+  const k=px.k,rx=Math.max(0,Math.floor(x0/k)-1),ry=Math.max(0,Math.floor(y0/k)-1),rw=Math.min(W0,Math.ceil((x1+1)/k)+1)-rx,rh=Math.min(H0,Math.ceil((y1+1)/k)+1)-ry;
+  const full=canvasOf(W0,H0),fx=full.getContext('2d');fx.drawImage(img,0,0,W0,H0);fx.globalCompositeOperation='destination-in';fx.imageSmoothingQuality='high';fx.drawImage(mc,0,0,W0,H0);
+  const out=canvasOf(rw,rh);out.getContext('2d').drawImage(full,-rx,-ry);
+  return {canvas:out,rect:{x:rx,y:ry,w:rw,h:rh}};
+}
+async function cutoutLayer(L,lassoPts){
+  const A=assetOf(L),img=getImg(A.id);if(!img)return;
+  busyStart(lassoPts?'Cutting out…':'Removing the background…',L.name);
+  try{
+    await sleep(40);
+    const px=imgPixels(img,lassoPts?320:300);
+    const T=lassoPts?lassoTrimap(px,lassoPts.map(([u,v])=>[u*px.k,v*px.k])):autoTrimap(px);
+    if(!T)throw new Error('That loop is too small. Draw loosely all the way around what you want to keep.');
+    let fg=await grabCut(px,T.tri,lassoPts?5:6,async i=>{busyUpdate(null,`${L.name} · refining the edge (${i+1})`);await sleep(0);},T.prior);
+    fg=cleanMask(fg,px.w,px.h,T.inside,px);
+    let area=0;for(const v of fg)area+=v;
+    if(area<px.w*px.h*.002)throw new Error(lassoPts?'Couldn’t find an object inside that loop. Try drawing around it again, a little more loosely.':'Couldn’t find a clear subject in this image. Try the Cut Out tool and draw around it.');
+    busyUpdate(null,`${L.name} · finishing the edges`);await sleep(0);
+    const R=refineCutout(img,fg,px.w,px.h);if(!R)throw new Error('Nothing was left after cutting out. Try again.');
+    const nA=canvasAsset(R.canvas,A.name.replace(/(-cutout)?\.png$/i,'')+'-cutout.png');
+    edit(()=>{reanchor(L,A,nA,R.rect,isBg(L)?'other':L.category);sel=new Set([L.id]);},{animate:false});
+    toast(`${lassoPts?'Cut out':'Background removed from'} ${L.name}. Undo brings back the original.`,'ok');
+  }catch(e){console.error(e);toast(e.message||'The cut-out failed','error');}
+  finally{busyEnd();}
+}
+let cut=null;   // lasso mode: {L, pts (screen points while drawing)}
+const cutTarget=()=>[...sel].map(layerBy).find(L=>L&&isImg(L)&&!isRef(L));
+function startCut(){
+  if(cut)return endCut();if(pen)endDraw();if(textEdit)finishTextEdit();
+  const L=cutTarget();
+  if(!L)return toast('Select an image layer first, then draw around the part you want to keep.');
+  if(L.locked)return toast('That layer is locked. Unlock it in the Layers panel first.');
+  if(!selectable(L))return toast('That layer is hidden in this layout. Show it first.');
+  cut={L,pts:null};sel=new Set([L.id]);cv.style.cursor='crosshair';refreshSelection();
+  toast('Draw loosely around what you want to keep. It doesn’t have to be exact. Esc cancels.');
+}
+function endCut(quiet){if(!cut)return;cut=null;cv.style.cursor='default';if(!quiet)refreshSelection();}
+function cutUp(){
+  const c=cut,pts=c.pts;c.pts=null;
+  if(!pts||pts.length<3){requestDraw();return toast('Draw all the way around what you want to keep');}
+  let ar=0;for(let i=0;i<pts.length;i++){const a=pts[i],b=pts[(i+1)%pts.length];ar+=a.x*b.y-b.x*a.y;}
+  if(Math.abs(ar)/2<64){requestDraw();return toast('That loop is too small. Draw loosely all the way around what you want to keep.');}
+  const m=layerMapper(c.L),ap=pts.map(p=>m.to(p));endCut(true);requestDraw();
+  cutoutLayer(c.L,ap);
+}
+function autoCutout(){
+  const Ls=[...sel].map(layerBy).filter(L=>L&&isImg(L)&&!isRef(L)&&!L.locked);
+  if(!Ls.length)return toast('Select an image layer first');
+  (async()=>{for(const L of Ls)await cutoutLayer(L,null);})();
+}
+function drawToolOverlay(){
+  if(pen){
+    const lv=pen.live;
+    if(lv&&lv.pts.length){const sw=lv.w/lv.m.k;ctx.save();ctx.lineCap='round';ctx.lineJoin='round';ctx.lineWidth=sw;
+      ctx.strokeStyle=ctx.fillStyle=lv.e?'rgba(255,255,255,.55)':lv.c;const q=lv.pts;
+      if(q.length===1){ctx.beginPath();ctx.arc(q[0].x,q[0].y,sw/2,0,Math.PI*2);ctx.fill();}
+      else{ctx.beginPath();ctx.moveTo(q[0].x,q[0].y);for(let i=1;i<q.length-1;i++)ctx.quadraticCurveTo(q[i].x,q[i].y,(q[i].x+q[i+1].x)/2,(q[i].y+q[i+1].y)/2);ctx.lineTo(q[q.length-1].x,q[q.length-1].y);ctx.stroke();}
+      ctx.restore();}
+    if(pen.hover&&!lv){const r=Math.max(1,BRUSH.size*Math.max(curFrame.w,curFrame.h)/2400/2);ctx.save();ctx.beginPath();ctx.arc(pen.hover.x,pen.hover.y,r,0,Math.PI*2);
+      ctx.lineWidth=2.5;ctx.strokeStyle='rgba(0,0,0,.5)';ctx.stroke();ctx.lineWidth=1;ctx.strokeStyle='#fff';ctx.stroke();ctx.restore();}
+  }
+  if(cut&&cut.pts&&cut.pts.length>1){const q=cut.pts;ctx.save();ctx.beginPath();ctx.moveTo(q[0].x,q[0].y);for(const p of q)ctx.lineTo(p.x,p.y);
+    ctx.fillStyle='rgba(169,241,177,.14)';ctx.fill();ctx.lineWidth=3;ctx.strokeStyle='rgba(0,0,0,.6)';ctx.stroke();ctx.lineWidth=1.5;ctx.setLineDash([6,4]);ctx.strokeStyle='#fff';ctx.stroke();ctx.restore();}
+}
+
+/* =====================================================================
+   RESPONSIVE PREVIEW (Window › Responsive Preview)
+   A resizable frame: the poster picks the layout closest to the frame's shape and animates between layouts,
+   exactly as the saved responsive project file does in a browser window.
+   ===================================================================== */
+let rpv=null;
+function rpvPick(A){let best=null,bd=1e9;for(const r of P.ratios){const d=Math.abs(Math.log((r.w/r.h)/A));if(d<bd){bd=d;best=r;}}return best;}
+function openRpv(){
+  if(textEdit)finishTextEdit();if(pen)endDraw();if(cut)endCut(true);if(previewMode)setPreviewMode(false);
+  const area=$('#rpvArea');$('#rpv').hidden=false;
+  rpv={w:0,h:0,cur:null,from:null,t0:0,raf:0};rpvReset();renderMenus();
+}
+function closeRpv(){if(!rpv)return;cancelAnimationFrame(rpv.raf);rpv=null;$('#rpv').hidden=true;renderMenus();requestDraw();}
+function rpvReset(){const a=$('#rpvArea').getBoundingClientRect(),A=aspectOf(P.activeRatio),mw=a.width-48,mh=a.height-48;let w=mw,h=w/A;if(h>mh){h=mh;w=h*A;}rpv.w=Math.max(40,w);rpv.h=Math.max(40,h);rpvDraw();}
+function rpvLayout(){const a=$('#rpvArea').getBoundingClientRect(),f=$('#rpvFrame');rpv.w=clamp(rpv.w,40,Math.max(40,a.width-24));rpv.h=clamp(rpv.h,40,Math.max(40,a.height-24));
+  f.style.width=rpv.w+'px';f.style.height=rpv.h+'px';f.style.left=((a.width-rpv.w)/2)+'px';f.style.top=((a.height-rpv.h)/2)+'px';}
+function rpvDraw(){
+  if(!rpv)return;rpvLayout();
+  const r=rpvPick(rpv.w/rpv.h),pls=()=>{const m={};for(const L of P.layers)m[L.id]=E.effective(P,L,r.key);return m;};
+  if(rpv.cur&&rpv.cur!==r.key){rpv.from=rpv.shown||null;rpv.fromA=rpv.A;rpv.t0=performance.now();}
+  rpv.cur=r.key;
+  const target=pls();let map=target;
+  if(rpv.from){const t=Math.min(1,(performance.now()-rpv.t0)/380),e=ease(t);map={};for(const id in target)map[id]=E.lerpPl(rpv.from[id]||{...target[id],_a:0},target[id],e);if(t>=1)rpv.from=null;}
+  rpv.shown=map;
+  // The chosen layout is drawn at its own exact shape, fitted inside the window, so it looks exactly like its export
+  let A=r.w/r.h;if(rpv.from){const t=Math.min(1,(performance.now()-rpv.t0)/380);A=Math.exp(E.lerp(Math.log(rpv.fromA||A),Math.log(A),ease(t)));}
+  rpv.A=A;
+  let dw=rpv.w,dh=dw/A;if(dh>rpv.h){dh=rpv.h;dw=dh*A;}
+  const ed=exportDims(r.key),c=$('#rpvCanvas'),dpr=Math.min(3,window.devicePixelRatio||1);
+  c.width=Math.max(1,Math.round(dw*dpr));c.height=Math.max(1,Math.round(dh*dpr));c.style.width=dw+'px';c.style.height=dh+'px';
+  c.style.left=((rpv.w-dw)/2)+'px';c.style.top=((rpv.h-dh)/2)+'px';
+  const x=c.getContext('2d');x.setTransform(c.width/ed.w,0,0,c.height/ed.h,0,0);x.imageSmoothingQuality='high';
+  // drawn in export pixels and scaled down, so sizes, fit rules and text all match the exported PNG
+  E.render(x,P,r.key,ed.w,ed.h,getImg,{placements:map});
+  $('#rpvInfo').textContent=`${r.name} (${r.w}:${r.h}) as it exports, ${ed.w} × ${ed.h} px · window ${Math.round(rpv.w)} × ${Math.round(rpv.h)}`;
+  if(rpv.from){cancelAnimationFrame(rpv.raf);rpv.raf=requestAnimationFrame(rpvDraw);}
+}
+{
+  let rd=null;
+  $('#rpvFrame').addEventListener('pointerdown',e=>{const h=e.target.dataset&&e.target.dataset.h;if(!h||!rpv)return;e.preventDefault();e.target.setPointerCapture(e.pointerId);rd={h,x:e.clientX,y:e.clientY,w:rpv.w,h0:rpv.h};});
+  $('#rpvFrame').addEventListener('pointermove',e=>{if(!rd)return;const dx=e.clientX-rd.x,dy=e.clientY-rd.y;   // the frame stays centred, so each edge moves twice as fast
+    if(rd.h.includes('r'))rpv.w=rd.w+2*dx;if(rd.h==='l')rpv.w=rd.w-2*dx;if(rd.h.includes('b'))rpv.h=rd.h0+2*dy;if(rd.h==='t')rpv.h=rd.h0-2*dy;rpvDraw();});
+  const up=()=>{rd=null;};$('#rpvFrame').addEventListener('pointerup',up);$('#rpvFrame').addEventListener('pointercancel',up);
+  $('#rpvDone').onclick=closeRpv;$('#rpvReset').onclick=()=>rpv&&rpvReset();
+  window.addEventListener('resize',()=>{if(rpv)rpvDraw();});
+}
+
+/* =====================================================================
    12. KEYBOARD
    ===================================================================== */
 document.addEventListener('keydown',e=>{
   if(modalCount>0)return;
   const t=e.target,typing=t&&(t.tagName==='INPUT'||t.tagName==='SELECT'||t.tagName==='TEXTAREA'||t.isContentEditable);
   const mod=e.metaKey||e.ctrlKey,k=e.key.toLowerCase();
-  if(e.key==='Escape'){if(openMenu){closeMenus();return;}if(previewMode){setPreviewMode(false);return;}sel.clear();refreshSelection();return;}
+  if(e.key==='Escape'){if(openMenu){closeMenus();return;}if(rpv){closeRpv();return;}if(pen){endDraw();return;}if(cut){endCut();return;}if(previewMode){setPreviewMode(false);return;}sel.clear();refreshSelection();return;}
   if(mod&&k==='s'){e.preventDefault();saveProject(e.shiftKey);return;}
   if(mod&&k==='o'){e.preventDefault();openFlow();return;}
   if(mod&&k==='i'){e.preventDefault();importAssetsFlow();return;}
