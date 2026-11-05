@@ -51,7 +51,7 @@
 [hidden]{display:none!important}
 html,body{height:100%;touch-action:manipulation;overscroll-behavior:none}
 *{touch-action:manipulation}
-@media (pointer:coarse){input,select,textarea,.pastezone{font-size:16px!important}.layer .op input[type=number]{width:52px}}
+@media (pointer:coarse){input,select,textarea:not(.textedit),.pastezone{font-size:16px!important}.layer .op input[type=number]{width:52px}}
 #view{touch-action:none!important}
 body{margin:0;background:var(--bg);color:var(--text);font:13px/1.35 var(--ui);overflow:hidden;-webkit-font-smoothing:antialiased}
 button,input,select{font:inherit;color:inherit}
@@ -145,7 +145,7 @@ button{cursor:pointer}
 .pcard:hover{border-color:var(--line-2)}
 .pcard[aria-current="true"]{border-color:var(--accent)}
 .pcard .pv{height:170px;display:grid;place-items:center;background:var(--paste);border-radius:5px;overflow:hidden}
-.pcard canvas{display:block;box-shadow:0 4px 14px rgba(0,0,0,.45);max-width:100%}
+.pcard canvas{display:block;box-shadow:0 4px 14px rgba(0,0,0,.45);max-width:100%;background-color:#fff;background-image:linear-gradient(45deg,#d9d9d9 25%,transparent 25%,transparent 75%,#d9d9d9 75%),linear-gradient(45deg,#d9d9d9 25%,transparent 25%,transparent 75%,#d9d9d9 75%);background-size:16px 16px;background-position:0 0,8px 8px}
 .pcard .meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 .pcard .meta b{font-weight:600}
 .pcard .meta .rt{font:11px var(--mono);color:var(--muted)}
@@ -161,12 +161,16 @@ button{cursor:pointer}
 .pnl-h .count{font:11px var(--mono);color:var(--faint)}
 .pnl-h .sp{flex:1}
 #layers{list-style:none;margin:0;padding:4px;overflow:auto;min-height:60px}
-.layer{display:grid;grid-template-columns:24px 40px minmax(0,1fr) auto;grid-template-areas:"eye thumb name cat" "eye thumb op op";column-gap:7px;row-gap:3px;align-items:center;padding:6px 6px 6px 4px;border-radius:6px;border:1px solid transparent;margin-bottom:2px;cursor:default}
+.layer{display:grid;grid-template-columns:24px 24px 40px minmax(0,1fr);grid-template-areas:"eye lock thumb name" "eye lock thumb op";column-gap:7px;row-gap:3px;align-items:center;padding:6px 6px 6px 4px;border-radius:6px;border:1px solid transparent;margin-bottom:2px;cursor:default}
 .layer:hover{background:var(--panel-2)}
 .layer[aria-selected="true"]{background:#24332b;border-color:#3b5a46}
 .layer.ref{background-image:repeating-linear-gradient(135deg,transparent 0 7px,rgba(255,255,255,.025) 7px 14px)}
 .layer.drop-before{box-shadow:0 -2px 0 var(--accent)}
 .layer.drop-after{box-shadow:0 2px 0 var(--accent)}
+.layer .lock{grid-area:lock;width:24px;height:24px;display:grid;place-items:center;background:none;border:0;border-radius:4px;color:var(--faint)}
+.layer .lock:hover{background:var(--line);color:var(--muted)}
+.layer .lock.on{color:var(--accent)}
+.layer.locked .thumb{opacity:.7}
 .layer .eye{grid-area:eye;width:24px;height:24px;display:grid;place-items:center;background:none;border:0;border-radius:4px;color:var(--muted)}
 .layer .eye:hover{background:var(--line)}
 .layer .eye.off{color:var(--faint)}
@@ -206,6 +210,10 @@ button{cursor:pointer}
 .chk{display:flex;align-items:center;gap:7px;font-size:12px}
 .chk input{accent-color:var(--accent)}
 .toggles{display:grid;gap:8px}
+.roles{display:grid;gap:9px}
+.roleopt{display:grid;gap:2px}
+.linkbtn{background:none;border:0;padding:0;color:var(--accent);font:inherit;text-decoration:underline;cursor:pointer}
+.roleopt small{color:var(--faint);font-size:11px;padding-left:39px;text-wrap:pretty}
 .rotrow{display:flex;align-items:center;gap:4px;min-width:0}
 .rotrow input[type=range]{flex:1;min-width:0;accent-color:var(--accent)}
 #propsBody textarea{width:100%;min-height:54px;resize:vertical;background:var(--field);border:1px solid var(--line-2);border-radius:6px;padding:6px 8px;font:13px var(--ui);color:#c2ccc6}
@@ -215,7 +223,8 @@ select option{background:var(--panel);color:#c2ccc6}
 #propsBody .prow select{background:var(--field);border:1px solid var(--line-2);border-radius:5px;padding:4px 6px;min-width:0;width:100%}
 .showin{display:grid;gap:5px}
 .showin em{font-style:normal;color:var(--faint);font-size:11px}
-.textedit{position:absolute;z-index:5;margin:0;padding:0 0;border:1px dashed var(--accent);background:rgba(10,48,25,.12);text-align:center;white-space:pre;overflow:hidden;resize:none;outline:none;caret-color:var(--accent);transform-origin:center}
+.textedit{position:absolute;z-index:5;margin:0;padding:0;border:0;background:transparent;color:transparent;-webkit-text-fill-color:transparent;text-align:center;white-space:pre;overflow:hidden;resize:none;outline:none;caret-color:var(--accent);transform-origin:0 0;box-sizing:content-box}
+.textedit::selection{background:rgba(169,241,177,.35)}
 .pastezone{min-height:90px;border:1.5px dashed var(--line-2);border-radius:8px;padding:12px;color:var(--muted);outline:none;background:var(--field)}
 .pastezone:focus{border-color:var(--accent)}
 .pastezone:empty::before{content:"Paste here";color:var(--faint)}
@@ -384,8 +393,7 @@ select option{background:var(--panel);color:#c2ccc6}
       </div>
       <section class="pnl" id="layersPnl" aria-label="Layers">
         <div class="pnl-h"><button class="ib chev" data-collapse="layers" aria-label="Collapse layers" title="Collapse"></button><h3>Layers</h3><span class="count" id="lcount"></span><span class="sp"></span>
-          <button class="btn small ghost" id="btnImport" title="Add images, text or pasted content" aria-haspopup="menu">+ Assets ▾</button>
-          <button class="btn small ghost" id="btnImportRef" title="Import reference posters">+ Reference</button>
+          <button class="btn small ghost" id="btnImport" title="Import images">Import</button><button class="btn small ghost" id="btnText" title="Add a text layer">Text</button>
         </div>
         <ul id="layers" aria-label="Layer list"></ul>
         <div class="pnl-f">
@@ -425,7 +433,7 @@ function UPEngine(){
   var clamp=function(v,a,b){return Math.max(a,Math.min(b,v));};
   var lerp=function(a,b,t){return a+(b-a)*t;};
   function defaultPlacement(layer){
-    if(layer.category==='background') return {ax:0.5,ay:0.5,s:1,rot:0,zoom:1,show:true};
+    if(layer.category==='background'||layer.category==='reference') return {ax:0.5,ay:0.5,s:1,rot:0,zoom:1,show:true};
     if(layer.category==='logo') return {ax:0.5,ay:0.22,s:0.42,rot:0,zoom:1,show:true};
     return {ax:0.5,ay:0.5,s:0.28,rot:0,zoom:1,show:true};
   }
@@ -441,7 +449,6 @@ function UPEngine(){
      rot     – degrees; zoom – background cover zoom (>=1); show – visible in this layout */
   function box(layer,asset,pl,W,H){
     var aw=asset.w, ah=asset.h, w, h, k;
-    if(layer.category==='reference'){k=Math.min(W/aw,H/ah);w=aw*k;h=ah*k;return {x:(W-w)/2,y:(H-h)/2,w:w,h:h,rot:0};}
     if(layer.category==='background'){
       k=Math.max(W/aw,H/ah)*Math.max(1,pl.zoom||1);w=aw*k;h=ah*k;
       return {x:(W-w)*clamp(pl.ax,0,1),y:(H-h)*clamp(pl.ay,0,1),w:w,h:h,rot:0};
@@ -450,7 +457,9 @@ function UPEngine(){
     w=pl.s*D*Math.sqrt(a); h=pl.s*D/Math.sqrt(a);
     // Assets shrink to fit the canvas unless the user deliberately made them bigger (free)
     if(!pl.free){var f=Math.min(1,W/w,H/h); w*=f; h*=f;}
-    return {x:(W-w)*pl.ax,y:(H-h)*pl.ay,w:w,h:h,rot:pl.rot||0};
+    // dx, dy: how far past the edges (as a fraction of the canvas width / height) it was dragged, so assets can
+    // go partly or fully off the poster even when they exactly fit one side
+    return {x:(W-w)*pl.ax+(pl.dx||0)*W,y:(H-h)*pl.ay+(pl.dy||0)*H,w:w,h:h,rot:pl.rot||0};
   }
   function fromBox(layer,asset,b,W,H,prev){
     var pl={ax:0.5,ay:0.5,s:0.3,rot:0,zoom:1,show:true};
@@ -465,15 +474,17 @@ function UPEngine(){
     pl.s=Math.sqrt(b.w*b.h/(W*H));
     if(b.w>W+.5||b.h>H+.5)pl.free=true;else delete pl.free;
     var ar=(b.w/b.h)/(asset.w/asset.h);pl.ar=Math.abs(ar-1)<.002?1:ar;
-    pl.ax=Math.abs(fx)<0.5?pl.ax:clamp(b.x/fx,-3,4);
-    pl.ay=Math.abs(fy)<0.5?pl.ay:clamp(b.y/fy,-3,4);
+    // ax/ay place it within the free space (0..1); whatever lies beyond the edges is kept in dx/dy
+    var ax=Math.abs(fx)<0.5?clamp(pl.ax==null?0.5:pl.ax,0,1):clamp(b.x/fx,0,1), ay=Math.abs(fy)<0.5?clamp(pl.ay==null?0.5:pl.ay,0,1):clamp(b.y/fy,0,1);
+    var dx=(b.x-ax*fx)/W, dy=(b.y-ay*fy)/H;
+    pl.ax=ax; pl.ay=ay; if(Math.abs(dx)>1e-5)pl.dx=dx;else delete pl.dx; if(Math.abs(dy)>1e-5)pl.dy=dy;else delete pl.dy;
     pl.rot=b.rot||0;
     return pl;
   }
   function alphaOf(p){return p._a!=null?p._a:(p.show===false?0:1);}
   function lerpPl(a,b,t){
     var d=((b.rot||0)-(a.rot||0))%360; if(d>180)d-=360; if(d<-180)d+=360;
-    return {ax:lerp(a.ax,b.ax,t),ay:lerp(a.ay,b.ay,t),s:lerp(a.s,b.s,t),zoom:lerp(a.zoom||1,b.zoom||1,t),ar:Math.exp(lerp(Math.log(a.ar||1),Math.log(b.ar||1),t)),rot:(a.rot||0)+d*t,show:true,free:!!(a.free||b.free),_a:lerp(alphaOf(a),alphaOf(b),t)};
+    return {ax:lerp(a.ax,b.ax,t),ay:lerp(a.ay,b.ay,t),dx:lerp(a.dx||0,b.dx||0,t),dy:lerp(a.dy||0,b.dy||0,t),s:lerp(a.s,b.s,t),zoom:lerp(a.zoom||1,b.zoom||1,t),ar:Math.exp(lerp(Math.log(a.ar||1),Math.log(b.ar||1),t)),rot:(a.rot||0)+d*t,show:true,free:!!(a.free||b.free),_a:lerp(alphaOf(a),alphaOf(b),t)};
   }
   /* Text layers show automatically only in thin layouts (banners, strips, anything 3:1 or thinner),
      unless the user switched them on or off for a layout. */
@@ -485,12 +496,13 @@ function UPEngine(){
   function render(ctx,p,rk,W,H,getImg,opts){
     opts=opts||{};
     ctx.save();
-    ctx.fillStyle=(p.settings&&p.settings.canvasColor)||'#ffffff'; ctx.fillRect(0,0,W,H);
+    var cc=p.settings&&p.settings.canvasColor;   // projects are transparent unless an old project set a colour
+    if(cc&&cc!=='transparent'){ctx.fillStyle=cc; ctx.fillRect(0,0,W,H);} else if(opts.clear!==false) ctx.clearRect(0,0,W,H);
     ctx.imageSmoothingEnabled=true; ctx.imageSmoothingQuality='high';
     for(var i=0;i<p.layers.length;i++){
       var L=p.layers[i]; if(!L.visible||!textShown(L,rk,W,H,p)||(opts.skip&&opts.skip[L.id])) continue;
       var isRef=L.category==='reference'; if(isRef&&!opts.includeRefs) continue;
-      var A=p.assets[L.assetId]; var img=A&&getImg(A.id); if(!img) continue;
+      var sw=opts.swap&&opts.swap[L.id]; var A=sw?sw.A:p.assets[L.assetId]; var img=sw?sw.img:(A&&getImg(A.id)); if(!img) continue;
       var pl=(opts.placements&&opts.placements[L.id])||effective(p,L,rk);
       var vis=isRef?1:alphaOf(pl); if(vis<=0.002) continue;
       var b=box(L,A,pl,W,H);
@@ -664,6 +676,8 @@ const ICONS={
   trash:'<path d="M3 4h10M6.5 4V2.5h3V4M4.5 4l.7 9.5h5.6l.7-9.5"/>',
   up:'<path d="M8 13V3M4 7l4-4 4 4"/>', down:'<path d="M8 3v10M4 9l4 4 4-4"/>',
   magnet:'<path d="M3.5 2.5v5a4.5 4.5 0 0 0 9 0v-5h-3v5a1.5 1.5 0 0 1-3 0v-5z"/><path d="M3.5 5h3M9.5 5h3"/>',
+  lock:'<rect x="3.5" y="7" width="9" height="7" rx="1.2"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2"/>',
+  unlock:'<rect x="3.5" y="7" width="9" height="7" rx="1.2"/><path d="M5.5 7V5a2.5 2.5 0 0 1 4.9-.7"/>',
   zoomIn:'<circle cx="7" cy="7" r="4.5"/><path d="M10.4 10.4 14 14M5 7h4M7 5v4"/>',
   zoomOut:'<circle cx="7" cy="7" r="4.5"/><path d="M10.4 10.4 14 14M5 7h4"/>',
   hand:'<path d="M5.5 8.5V3.8a1 1 0 0 1 2 0V7.5M7.5 7V2.8a1 1 0 0 1 2 0V7.5M9.5 7.2V3.8a1 1 0 0 1 2 0v5.4M11.5 6.6a1 1 0 0 1 2 0V10c0 2.5-1.8 4.5-4.5 4.5H8.4c-1.4 0-2.4-.6-3.2-1.7L3 9.6a1 1 0 0 1 1.6-1.2l.9 1.1"/>',
@@ -687,14 +701,29 @@ const catName=c=>(CATS.find(x=>x[0]===c)||[0,c])[1];
 function newProject(){
   return {format:'universal-posters',version:1,
     meta:{id:uid('proj'),name:'Untitled poster',created:Date.now(),modified:Date.now()},
-    settings:{canvasColor:'#ffffff',grid:false,showRefs:true,exportLong:2400,exportIncludeRefs:false,exportGrid:false},
+    settings:{canvasColor:null,grid:false,showRefs:true,exportLong:2400,exportIncludeRefs:false,exportGrid:false},
     ratios:PRESETS.map(r=>({...r})),baseRatio:'square',activeRatio:'square',
     assets:{},layers:[],layouts:{shared:{},overrides:{},meta:{}}};
 }
 
+/* A new poster starts with a plain white image layer that fills the poster, locked so it stays put.
+   It's an ordinary asset: unlock it, recolour it, hide it or delete it for a transparent poster. */
+function solidAsset(p,color,name){
+  const c=canvasOf(64,64),x=c.getContext('2d');x.fillStyle=color;x.fillRect(0,0,64,64);const data=c.toDataURL('image/png'),id=uid('ast');
+  p.assets[id]={id,name,w:64,h:64,data,thumb:data,stats:{opaque:1,transparent:0,aspect:1}};IMG.set(id,c);return id;
+}
+function addSolidBackground(p,color='#ffffff',name='Background'){
+  const assetId=solidAsset(p,color,name.replace(/\s+/g,'-')+'.png');
+  const L={id:uid('lay'),assetId,name,nameAuto:false,type:'image',category:'background',catAuto:false,locked:true,visible:true,opacity:1,starter:true};
+  p.layers.unshift(L);p.layouts.shared[L.id]=E.defaultPlacement(L);return L;
+}
+function freshProject(){const p=newProject();addSolidBackground(p);return p;}
+// The untouched starter background doesn't count as content (no autosave, no "unsaved changes" prompts).
+function isStarter(L){return !!(L&&L.starter&&L.locked&&L.visible&&isBg(L)&&L.opacity>=.999);}
+function hasContent(p){return (p||P).layers.some(L=>!isStarter(L));}
 let projectHandle=null;   // file chosen with the browser's save dialog; Save writes back to it
-let P=newProject();
 const IMG=new Map();
+let P=freshProject();
 const getImg=id=>IMG.get(id);
 let sel=new Set();
 let scope='shared';            // 'shared' | 'layout'
@@ -782,7 +811,7 @@ const BG_RX=/(^|[^a-z])(bg|back ?ground|backdrop|scene|sky|wallpaper|landscape|p
 const LOGO_RX=/(logo|title|wordmark|brand|type|lockup|headline)/i;
 function guessCategory(asset){
   const n=asset.name, st=asset.stats;
-  const hasBg=P.layers.some(isBg), hasLogo=P.layers.some(L=>L.category==='logo');
+  const hasBg=P.layers.some(L=>isBg(L)&&!isStarter(L)), hasLogo=P.layers.some(L=>L.category==='logo');
   if(BG_RX.test(n)&&!hasBg) return 'background';
   if(LOGO_RX.test(n)&&!hasLogo) return 'logo';
   if(st.opaque>0.985&&!hasBg) return 'background';
@@ -817,9 +846,10 @@ async function importFiles(files,mode){
     busyUpdate(null,`${list.length>1?`${i+1} of ${list.length} · `:''}${f.name}`);await sleep(16);
     try{
       const asset=await toPNGAsset(await readAs(f,'readAsDataURL'),f.name);
-      const cat=mode==='reference'?'reference':guessCategory(asset);
+      const cat=mode==='reference'?'reference':'other';   // everything is an asset; roles are optional, in Properties
       const L={id:uid('lay'),assetId:asset.id,name:asset.name,category:cat,catAuto:mode!=='reference',visible:true,opacity:cat==='reference'?0.5:1};
-      insertLayer(L); P.layouts.shared[L.id]=initialPlacement(L); added.push(L);
+      // every imported image starts centred and scaled to fit the poster (in each layout, as its shape allows)
+      insertLayer(L); P.layouts.shared[L.id]=cat==='reference'?initialPlacement(L):{ax:.5,ay:.5,s:1,rot:0,zoom:1,show:true}; added.push(L);
     }catch(e){toast(`Couldn't import ${f.name}: ${e.message}`,'error');}
   }
   }finally{busyEnd();}
@@ -839,10 +869,11 @@ function pickFiles({accept='image/*',multiple=true}={}){
   });
 }
 async function importAssetsFlow(){
-  const f=await pickFiles();if(!f.length)return;const wasEmpty=!P.layers.length;
+  const f=await pickFiles();if(!f.length)return;const wasEmpty=!hasContent();
   const added=await importFiles(f,'asset');if(!added.length)return;
   // first images in an empty project and no references: the background sets the starting shape
-  if(wasEmpty){const bg=added.find(isBg);if(bg)await decideInitialRatio([bg]);}
+  // first images in an empty project: the full-bleed (opaque) images set the starting shape
+  if(wasEmpty){const full=added.filter(L=>assetOf(L).stats.opaque>.97);if(full.length)await decideInitialRatio(full,{customFor:'largest'});}
   askAutomate();
 }
 async function importRefsFlow(){
@@ -853,7 +884,7 @@ async function importRefsFlow(){
 function askImportAssets(n){
   const has=P.layers.some(L=>!isRef(L));
   modal({title:has?'Import more assets?':'Import your poster assets?',
-    body:el('p',{text:`${n>1?'Your reference posters are':'Your reference poster is'} ready. Would you like to import the images that make up your poster now, like the background, logo and other artwork? You can also do this later from File › Import Assets.`}),
+    body:el('p',{text:`${n>1?'Your reference posters are':'Your reference poster is'} ready. Would you like to import the images that make up your poster now, like the background, logo and other artwork? You can also do this later from File › Import.`}),
     actions:[{label:'Not now',onClick:c=>c()},{label:'Import assets…',kind:'primary',onClick:c=>{c();importAssetsFlow();}}]});
 }
 
@@ -868,10 +899,12 @@ function ratioKeyFor(w,h,label){
 /* Picks the starting aspect ratio from the imported images, without asking:
    a square image always means Square; otherwise Portrait, Landscape, the banners, then the strips.
    Any image that matches no layout gets a custom layout of its own, so every reference has an exact match. */
-async function decideInitialRatio(layers){
+async function decideInitialRatio(layers,{customFor='all'}={}){
   const tol=.012,match=(r,A)=>Math.abs(Math.log((r.w/r.h)/A))<tol,list=layers.map(L=>{const a=assetOf(L);return {A:a.w/a.h,w:a.w,h:a.h};});
   const created=[];
-  for(const it of list)if(!P.ratios.some(r=>match(r,it.A))){const rk=ratioKeyFor(it.w,it.h);created.push(ratioBy(rk));}
+  const need=list.filter(it=>!P.ratios.some(r=>match(r,it.A)));
+  if(customFor==='largest'){if(need.length===list.length&&need.length){const big=need.slice().sort((a,b)=>b.w*b.h-a.w*a.h)[0];created.push(ratioBy(ratioKeyFor(big.w,big.h)));}}
+  else for(const it of need)if(!P.ratios.some(r=>match(r,it.A))){const rk=ratioKeyFor(it.w,it.h);created.push(ratioBy(rk));}
   const order=['square','portrait','landscape','banner-h','banner-v','strip-h','strip-v'];
   let rk=order.find(k=>P.ratios.some(r=>r.key===k)&&list.some(it=>match(ratioBy(k),it.A)));
   if(!rk){const r=P.ratios.find(r=>list.some(it=>match(r,it.A)));rk=r?r.key:P.activeRatio;}
@@ -946,15 +979,21 @@ function drawStage(now){
   const F=frameRect(A);curFrame=F;
   ctx.setTransform(DPR,0,0,DPR,0,0);
   ctx.fillStyle=COL.paste||'#0b0f0d';ctx.fillRect(0,0,SW,SH);
-  ctx.save();ctx.shadowColor='rgba(0,0,0,.55)';ctx.shadowBlur=26;ctx.shadowOffsetY=6;ctx.fillStyle='#000';ctx.fillRect(F.x,F.y,F.w,F.h);ctx.restore();
+  ctx.save();ctx.shadowColor='rgba(0,0,0,.55)';ctx.shadowBlur=26;ctx.shadowOffsetY=6;ctx.fillStyle='#fff';ctx.fillRect(F.x,F.y,F.w,F.h);ctx.restore();
+  ctx.save();ctx.translate(F.x,F.y);ctx.fillStyle=checkerPattern();ctx.fillRect(0,0,F.w,F.h);ctx.restore();   // transparent areas
   ctx.save();ctx.translate(F.x,F.y);ctx.beginPath();ctx.rect(0,0,F.w,F.h);ctx.clip();
-  E.render(ctx,P,P.activeRatio,F.w,F.h,getImg,{includeRefs:P.settings.showRefs!==false,placements:plMap,skip:textEdit?{[textEdit.L.id]:true}:null});
+  E.render(ctx,P,P.activeRatio,F.w,F.h,getImg,{includeRefs:P.settings.showRefs!==false,placements:plMap,swap:textSwap(),clear:false});
   if(P.settings.grid)E.drawGrid(ctx,F.w,F.h);
   ctx.restore();
   drawOverlay(F,plMap);
   if(anim)requestDraw();
 }
-function boxOf(L,pl){return E.box(L,assetOf(L),pl||E.effective(P,L,P.activeRatio),curFrame.w,curFrame.h);}
+// Position as a fraction of the free space, including any distance dragged past the edges
+function posFrac(pl,b,axis){const W=curFrame.w,H=curFrame.h,f=axis==='x'?W-b.w:H-b.h;
+  if(Math.abs(f)<.5)return axis==='x'?pl.ax:pl.ay;return (axis==='x'?b.x:b.y)/f;}
+let CHECKER=null;
+function checkerPattern(){if(!CHECKER){const c=canvasOf(16,16),x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,16,16);x.fillStyle='#d9d9d9';x.fillRect(0,0,8,8);x.fillRect(8,8,8,8);CHECKER=ctx.createPattern(c,'repeat');}return CHECKER;}
+function boxOf(L,pl){const sw=textSwap(),A=sw&&sw[L.id]?sw[L.id].A:assetOf(L);return E.box(L,A,pl||E.effective(P,L,P.activeRatio),curFrame.w,curFrame.h);}
 function cornersOf(b){
   const cx=b.x+b.w/2,cy=b.y+b.h/2,r=b.rot*Math.PI/180,c=Math.cos(r),s=Math.sin(r);
   return [[-1,-1],[1,-1],[1,1],[-1,1]].map(([u,v])=>{const x=u*b.w/2,y=v*b.h/2;return [cx+x*c-y*s,cy+x*s+y*c];});
@@ -969,16 +1008,18 @@ function drawOverlay(F,plMap){
     return {b,pts};
   };
   if(hoverId&&!sel.has(hoverId)){const L=layerBy(hoverId);if(L&&!isBg(L)){ctx.globalAlpha=.6;draw1(L,false);ctx.globalAlpha=1;}}
-  const selL=[...sel].map(layerBy).filter(L=>L&&!isRef(L)&&L.visible&&!(textEdit&&textEdit.L===L));
+  const selL=[...sel].map(layerBy).filter(L=>L&&L.visible&&!(textEdit&&textEdit.L===L));
   for(const L of selL){
     const {b,pts}=draw1(L,true);
-    if(selL.length===1&&!plMap){
+    if(selL.length===1&&!plMap&&!L.locked){
       if(!isBg(L)){const rh=rotHandle(b),tm=[(pts[0][0]+pts[1][0])/2,(pts[0][1]+pts[1][1])/2];
         ctx.beginPath();ctx.moveTo(tm[0],tm[1]);ctx.lineTo(rh[0],rh[1]);ctx.strokeStyle=COL.sel;ctx.lineWidth=1;ctx.stroke();
         ctx.beginPath();ctx.arc(rh[0],rh[1],5.5,0,Math.PI*2);ctx.fillStyle='#fff';ctx.fill();ctx.stroke();}
       for(const p of pts){ctx.fillStyle='#fff';ctx.fillRect(p[0]-4.5,p[1]-4.5,9,9);ctx.strokeStyle=COL.sel;ctx.lineWidth=1.5;ctx.strokeRect(p[0]-4.5,p[1]-4.5,9,9);}
     }
   }
+  if(textEdit&&textEdit.prev){const pts=cornersOf(boxOf(textEdit.L));ctx.beginPath();pts.forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));ctx.closePath();
+    ctx.strokeStyle=COL.sel;ctx.lineWidth=1;ctx.setLineDash([4,3]);ctx.stroke();ctx.setLineDash([]);}
   if(guides.length){ctx.strokeStyle=COL.guide;ctx.lineWidth=1;ctx.setLineDash([5,4]);ctx.beginPath();for(const g of guides){ctx.moveTo(g[0],g[1]);ctx.lineTo(g[2],g[3]);}ctx.stroke();ctx.setLineDash([]);}
   ctx.restore();
 }
@@ -987,9 +1028,10 @@ function ptIn(b,px,py){
   const lx=dx*Math.cos(r)-dy*Math.sin(r),ly=dx*Math.sin(r)+dy*Math.cos(r);
   return Math.abs(lx)<=b.w/2&&Math.abs(ly)<=b.h/2;
 }
-function selectable(L){return L.visible&&!isRef(L)&&E.effective(P,L,P.activeRatio).show!==false&&E.textShown(L,P.activeRatio,aspectOf(P.activeRatio),1,P);}
+function selectable(L){return L.visible&&!L.locked&&E.effective(P,L,P.activeRatio).show!==false&&E.textShown(L,P.activeRatio,aspectOf(P.activeRatio),1,P);}
 function hitLayer(x,y){
-  for(let i=P.layers.length-1;i>=0;i--){const L=P.layers[i];if(selectable(L)&&!isBg(L)&&ptIn(boxOf(L),x,y))return L;}
+  for(let i=P.layers.length-1;i>=0;i--){const L=P.layers[i];if(selectable(L)&&!isBg(L)&&!isRef(L)&&ptIn(boxOf(L),x,y))return L;}
+  for(let i=P.layers.length-1;i>=0;i--){const L=P.layers[i];if(selectable(L)&&isRef(L)&&ptIn(boxOf(L),x,y))return L;}
   for(let i=P.layers.length-1;i>=0;i--){const L=P.layers[i];if(selectable(L)&&isBg(L)&&x>=0&&y>=0&&x<=curFrame.w&&y<=curFrame.h)return L;}
   return null;
 }
@@ -1152,35 +1194,47 @@ let textEdit=null;
 function startTextEdit(L,selectAll){
   if(textEdit)finishTextEdit();
   if(!L||L.type!=='text'||!selectable(L))return;
-  const t=L.text,pl=E.effective(P,L,P.activeRatio),b=boxOf(L,pl),A=assetOf(L),k=b.w/A.w,fs=320*k;
+  const t=L.text;
   const ta=el('textarea',{class:'textedit','aria-label':'Type your text',spellcheck:'false'});ta.value=t.content;
-  const font=`${t.italic?'italic ':''}${t.bold?700:400} ${fs}px ${fontStack(t.font)}`;
-  ta.style.cssText=`font:${font};line-height:${1.18*fs}px;color:${t.color};${t.stroke?`-webkit-text-stroke:${2*fs*clamp(+t.strokeWidth||0,0,40)/100}px ${t.strokeColor};paint-order:stroke fill;`:''}transform:rotate(${b.rot||0}deg)`;
-  const m=canvasOf(4,4).getContext('2d');
-  // The box previews exactly where and how big the finished text will be: same size rules as the poster
-  // (text that grows too wide shrinks to fit the canvas), so nothing jumps when you finish typing.
-  const base=`${t.italic?'italic ':''}${t.bold?700:400} 320px ${fontStack(t.font)}`,sw0=t.stroke?320*clamp(+t.strokeWidth||0,0,40)/100:0,pad0=sw0;
-  const fit=()=>{m.font=base;const lines=ta.value.split('\n'),mets=lines.map(l=>m.measureText(l||' '));
-    const asc=Math.max(...mets.map(x=>x.actualBoundingBoxAscent||240)),desc=Math.max(...mets.map(x=>x.actualBoundingBoxDescent||64));
-    const w0=Math.max(...mets.map(x=>(x.actualBoundingBoxLeft||0)+(x.actualBoundingBoxRight||x.width)))+pad0*2,h0=asc+desc+320*1.18*(lines.length-1)+pad0*2;
-    const nb=E.box(L,{w:w0,h:h0},E.effective(P,L,P.activeRatio),curFrame.w,curFrame.h),kk=nb.w/w0,fz=320*kk;
-    // Safari zooms into text boxes under 16px, so the box always uses at least 16px text and is scaled down to the real size
-    const rf=Math.max(16,fz),sc=fz/rf,u=1/sc;
-    ta.style.font=`${t.italic?'italic ':''}${t.bold?700:400} ${rf}px ${fontStack(t.font)}`;ta.style.lineHeight=(1.18*rf)+'px';
-    ta.style.paddingTop=Math.max(0,(pad0+asc)*kk-0.86*fz)*u+'px';
-    if(t.stroke)ta.style.webkitTextStroke=`${2*sw0*kk*u}px ${t.strokeColor}`;
-    const cx=curFrame.x+nb.x+nb.w/2,cy=curFrame.y+nb.y+nb.h/2,w=nb.w*u,h=nb.h*u;
-    ta.style.width=w+'px';ta.style.height=h+'px';ta.style.left=(cx-w/2)+'px';ta.style.top=(cy-h/2)+'px';ta.style.transform=`rotate(${nb.rot||0}deg) scale(${sc})`;};
+  textEdit={L,ta,prev:null};
+  // The poster shows the real rendered text while you type (same drawing code as the finished layer), so the preview
+  // matches exactly. The typing box sits invisibly on top of it: only the caret and selection show.
+  const fit=()=>{
+    const tc=textCanvas({...t,content:ta.value.replace(/\s+$/,'')||' '}),c=tc.canvas;
+    textEdit.prev={A:{id:'textedit',w:c.width,h:c.height},img:c};
+    const nb=E.box(L,textEdit.prev.A,E.effective(P,L,P.activeRatio),curFrame.w,curFrame.h),k=nb.w/c.width,fz=tc.fs*k;
+    // Safari zooms into text boxes under 16px, so the box uses at least 16px text and is scaled down to the real size
+    const rf=Math.max(16,fz),sc=fz/rf,LH=tc.lh*k,n=ta.value.split('\n').length;
+    const firstBase=(tc.pad+tc.asc-tc.y0)*k,lineBase=(LH-(tc.fA+tc.fD)*k)/2+tc.fA*k;   // baseline inside a CSS line box
+    const midX=(tc.W/2-tc.x0)*k,w=Math.max(tc.tw*k,fz)+fz*2,h=n*LH+fz*.5;
+    const Lx=curFrame.x+nb.x+midX-w/2,Ly=curFrame.y+nb.y+firstBase-lineBase,cx=curFrame.x+nb.x+nb.w/2,cy=curFrame.y+nb.y+nb.h/2;
+    ta.style.font=textFont(t,rf);ta.style.lineHeight=(LH/sc)+'px';ta.style.width=(w/sc)+'px';ta.style.height=(h/sc)+'px';
+    ta.style.left='0px';ta.style.top='0px';
+    ta.style.transform=`translate(${cx}px,${cy}px) rotate(${nb.rot||0}deg) translate(${Lx-cx}px,${Ly-cy}px) scale(${sc})`;
+    requestDraw();};
   ta.addEventListener('input',fit);
   ta.addEventListener('keydown',e=>{e.stopPropagation();if(e.key==='Escape'||(e.key==='Enter'&&(e.ctrlKey||e.metaKey))){e.preventDefault();finishTextEdit();}});
   ta.addEventListener('blur',()=>finishTextEdit());
   ['pointerdown','dblclick','wheel'].forEach(ev=>ta.addEventListener(ev,e=>e.stopPropagation()));
-  stage.append(ta);textEdit={L,ta};fit();requestDraw();
+  stage.append(ta);fit();
   setTimeout(()=>{ta.focus();if(selectAll)ta.select();else ta.setSelectionRange(ta.value.length,ta.value.length);},20);
 }
+/* While typing (and until the finished text image is ready) the layer draws from the live preview. */
+let textPending=null;
+function textSwap(){
+  if(textEdit&&textEdit.prev)return {[textEdit.L.id]:textEdit.prev};
+  if(textPending)return {[textPending.id]:textPending.prev};
+  return null;
+}
+function textEditBox(){
+  const te=textEdit;if(!te||!te.prev)return null;
+  return E.box(te.L,te.prev.A,E.effective(P,te.L,P.activeRatio),curFrame.w,curFrame.h);
+}
 function finishTextEdit(){
-  if(!textEdit)return;const {L,ta}=textEdit;textEdit=null;const v=ta.value.replace(/\s+$/,'');ta.remove();requestDraw();
-  if(v&&v!==L.text.content)updateText(L,{content:v});else if(!v)toast('Text left unchanged: it can’t be empty');
+  if(!textEdit)return;const {L,ta,prev}=textEdit;textEdit=null;const v=ta.value.replace(/\s+$/,'');ta.remove();
+  if(v&&v!==L.text.content){const tp=textPending={id:L.id,prev};updateText(L,{content:v}).finally(()=>{if(textPending===tp)textPending=null;requestDraw();});}
+  else if(!v)toast('Text left unchanged: it can’t be empty');
+  requestDraw();
   renderProps();
 }
 
@@ -1208,6 +1262,7 @@ function arrange(op){
 }
 function align(op){
   const all=[...sel].map(layerBy).filter(L=>L&&selectable(L)),Ls=all.filter(L=>!isBg(L)),bgs=all.filter(isBg);
+  if(!all.length&&[...sel].some(id=>{const L=layerBy(id);return L&&L.locked;}))return toast('Locked layers can’t be moved. Unlock them in the Layers panel first.');
   if(!all.length)return toast('Select a layer to align');
   const W=curFrame.w,H=curFrame.h;
   // Backgrounds always fill the canvas, so they align to the canvas: the image's own edge or centre lines up with
@@ -1237,10 +1292,29 @@ function align(op){
       if(op==='left')b.x=x0;if(op==='center'||op==='both')b.x=(x0+x1)/2-b.w/2;if(op==='both')b.y=(y0+y1)/2-b.h/2;if(op==='right')b.x=x1-b.w;
       if(op==='top')b.y=y0;if(op==='middle')b.y=(y0+y1)/2-b.h/2;if(op==='bottom')b.y=y1-b.h;}
     for(const i of items){const pl=E.fromBox(i.L,assetOf(i.L),i.b,W,H,i.pl);
-      if(toCanvas){if(op==='both'){pl.ax=.5;pl.ay=.5;}if(op==='left')pl.ax=0;if(op==='center')pl.ax=.5;if(op==='right')pl.ax=1;if(op==='top')pl.ay=0;if(op==='middle')pl.ay=.5;if(op==='bottom')pl.ay=1;}
+      if(toCanvas){if(['both','left','center','right'].includes(op))delete pl.dx;if(['both','top','middle','bottom'].includes(op))delete pl.dy;if(op==='both'){pl.ax=.5;pl.ay=.5;}if(op==='left')pl.ax=0;if(op==='center')pl.ax=.5;if(op==='right')pl.ax=1;if(op==='top')pl.ay=0;if(op==='middle')pl.ay=.5;if(op==='bottom')pl.ay=1;}
       writePl(i.L.id,pl);}
   });
   notifyDropped();
+}
+/* Roles replace the old categories. They are options on an asset, not types: any image can fill the poster,
+   be the main logo or be a reference poster (a guide that is never exported). */
+function roleChange(L,role){
+  const cat=L.category===role?'other':role;   // switching the active role off makes it a plain asset again
+  if(cat===L.category)return;
+  edit(()=>{
+    const from=L.category;L.category=cat;L.catAuto=false;
+    const conv=(pl,rk)=>{const A=aspectOf(rk),T={W:1000*Math.sqrt(A),H:1000/Math.sqrt(A)},as=assetOf(L);
+      const b=E.box({...L,category:from},as,pl,T.W,T.H);return E.fromBox(L,as,b,T.W,T.H,pl);};
+    if(from==='background'&&cat!=='background'){   // keep it exactly where it was, now freely movable
+      const sh=P.layouts.shared[L.id];if(sh){const q=conv(sh,P.baseRatio);q.free=true;P.layouts.shared[L.id]=q;}
+      for(const rk in P.layouts.overrides){const o=P.layouts.overrides[rk][L.id];if(o){const q=conv(o,rk);q.free=true;P.layouts.overrides[rk][L.id]=q;}}}
+    if(cat==='background'){P.layouts.shared[L.id]=E.defaultPlacement(L);for(const rk in P.layouts.overrides)delete P.layouts.overrides[rk][L.id];
+      const i=P.layers.indexOf(L);P.layers.splice(i,1);const j=P.layers.findIndex(x=>!isBg(x));P.layers.splice(j<0?P.layers.length:j,0,L);}
+    if(cat==='reference'){P.layouts.shared[L.id]=E.defaultPlacement(L);for(const rk in P.layouts.overrides)delete P.layouts.overrides[rk][L.id];
+      if(L.opacity>.99)L.opacity=.5;const i=P.layers.indexOf(L);P.layers.splice(i,1);P.layers.push(L);}
+    if(from==='reference'&&Math.abs(L.opacity-.5)<.001)L.opacity=1;
+  });
 }
 function setCategory(L,cat){
   if(L.category===cat)return;
@@ -1282,10 +1356,16 @@ const TEXT_FONTS=[['Arial','Arial, Helvetica, sans-serif'],['Helvetica','Helveti
   ['Montserrat','Montserrat, sans-serif'],['Roboto','Roboto, sans-serif'],['Open Sans','"Open Sans", sans-serif'],['Lato','Lato, sans-serif'],['Poppins','Poppins, sans-serif'],
   ['Oswald','Oswald, sans-serif'],['Bebas Neue','"Bebas Neue", sans-serif'],['Anton','Anton, sans-serif'],['Playfair Display','"Playfair Display", serif']];
 const fontStack=f=>(TEXT_FONTS.find(x=>x[0]===f)||TEXT_FONTS[0])[1];
-const TEXT_DEFAULT={content:'Your title',font:'Helvetica',bold:true,italic:false,color:'#ffffff',stroke:false,strokeWidth:6,strokeColor:'#000000'};
+const TEXT_DEFAULT={content:'Your title',font:'Helvetica',bold:true,italic:false,color:'#ffffff',stroke:true,strokeWidth:6,strokeColor:'#000000'};
+const textFont=(t,fs)=>`${t.italic?'italic ':''}${t.bold?700:400} ${fs}px ${fontStack(t.font)}`;
 async function renderTextAsset(t){
-  const fs=320,font=`${t.italic?'italic ':''}${t.bold?700:400} ${fs}px ${fontStack(t.font)}`;
-  try{await document.fonts.load(font,t.content||'A');}catch(e){}
+  try{await document.fonts.load(textFont(t,320),t.content||'A');}catch(e){}
+  return textCanvas(t).canvas.toDataURL('image/png');
+}
+/* Draws the text exactly as the finished layer will look (also used live while typing). Returns the canvas cropped
+   tight to the letters, plus the crop offset and line metrics so the typing box can sit exactly over it. */
+function textCanvas(t){
+  const fs=320,font=textFont(t,fs);
   const lines=String(t.content||' ').split('\n'),m=canvasOf(8,8).getContext('2d');m.font=font;
   const sw=t.stroke?fs*clamp(+t.strokeWidth||0,0,40)/100:0,lh=fs*1.18;
   const mets=lines.map(l=>m.measureText(l||' '));
@@ -1299,8 +1379,9 @@ async function renderTextAsset(t){
   // crop to exactly the drawn letters (and stroke), so the bounding box hugs the text
   const d=x.getImageData(0,0,c.width,c.height).data;let x0=c.width,y0=c.height,x1=-1,y1=-1;
   for(let yy=0;yy<c.height;yy++){const row=yy*c.width*4;for(let xx=0;xx<c.width;xx++)if(d[row+xx*4+3]>8){if(xx<x0)x0=xx;if(xx>x1)x1=xx;if(yy<y0)y0=yy;if(yy>y1)y1=yy;}}
-  if(x1<0)return c.toDataURL('image/png');
-  const o=canvasOf(x1-x0+1,y1-y0+1);o.getContext('2d').drawImage(c,-x0,-y0);return o.toDataURL('image/png');
+  const info={W,H,pad,asc,lh,fs,font,lines,tw,fA:m.measureText('Hg').fontBoundingBoxAscent||fs*.9,fD:m.measureText('Hg').fontBoundingBoxDescent||fs*.25};
+  if(x1<0)return {...info,canvas:c,x0:0,y0:0};
+  const o=canvasOf(x1-x0+1,y1-y0+1);o.getContext('2d').drawImage(c,-x0,-y0);return {...info,canvas:o,x0,y0};
 }
 async function textAssetFor(t){
   const data=await renderTextAsset(t),img=await loadImg(data),id=uid('ast');
@@ -1391,6 +1472,28 @@ function pasteDialog(){
   zone.addEventListener('keydown',e=>{if(!(e.ctrlKey||e.metaKey))e.preventDefault();e.stopPropagation();});
   setTimeout(()=>zone.focus(),60);
 }
+/* Edit › Paste: reads the system clipboard. An image is imported as an asset; layers copied here (including text
+   layers) are pasted as layers; other copied text becomes a new text layer. Where the browser won't let the page
+   read the clipboard, the copied layers are pasted, or a paste box opens for Ctrl/⌘+V or press-and-hold › Paste. */
+function editPaste(){
+  closeMenus&&closeMenus();
+  const cb=navigator.clipboard;
+  const fallback=()=>{if(clip)pasteLayers();else pasteDialog();};
+  if(!cb||!cb.read){if(cb&&cb.readText)cb.readText().then(t=>{if(!pasteText(t))fallback();},fallback);else fallback();return;}
+  cb.read().then(async items=>{
+    for(const it of items){const ty=it.types.find(t=>/^image\//.test(t));
+      if(ty){const b=await it.getType(ty),ext=(ty.split('/')[1]||'png').replace('jpeg','jpg').replace(/\+.*/,'');
+        const a=await importFiles([new File([b],`pasted-image-${Date.now()}.${ext}`,{type:ty})],'asset');if(a.length)askAutomate();return;}}
+    for(const it of items)if(it.types.includes('text/plain')){const t=await (await it.getType('text/plain')).text();if(pasteText(t))return;}
+    if(clip)return pasteLayers();
+    toast('Nothing to paste: the clipboard has no image or text','error');
+  },()=>{if(cb.readText)cb.readText().then(t=>{if(!pasteText(t))fallback();},fallback);else fallback();});
+}
+function pasteText(text){
+  if(clip&&text===clipMarker){pasteLayers();return true;}
+  if(text&&text.trim()){addTextLayer(text.trim().slice(0,400));return true;}
+  return false;
+}
 async function pasteLayers(){
   if(!clip)return toast('Nothing to paste yet. Select a layer and choose Edit › Copy first.');
   for(const id in clip.assets){if(!P.assets[id])P.assets[id]={...clip.assets[id]};if(!IMG.has(id)){try{IMG.set(id,await loadImg(clip.assets[id].data));}catch(e){return toast('Could not paste: an image failed to load','error');}}}
@@ -1453,13 +1556,13 @@ function menuDefs(){
   return {
     File:[
       {label:'New Document',sc:MOD+'Alt+N',act:()=>newDocument()},
+      {label:'Resume Recent Project',dis:!resumable,act:()=>resumeSession()},
       {label:'Open…',sc:MOD+'O',act:()=>openFlow()},
       {sep:1},
       {label:'Save',sc:MOD+'S',act:()=>saveProject(false)},
       {label:'Save As…',sc:MOD+'Shift+S',act:()=>saveProject(true)},
       {sep:1},
-      {label:'Import Assets…',sc:MOD+'I',act:importAssetsFlow},
-      {label:'Import Reference Posters…',act:importRefsFlow},
+      {label:'Import…',sc:MOD+'I',act:importAssetsFlow},
       {sep:1},
       {label:'Export…',sc:MOD+'E',act:()=>exportDialog()},
       {sep:1},
@@ -1470,8 +1573,7 @@ function menuDefs(){
       {label:'Redo',sc:MOD+'Shift+Z',dis:!HIST.redo.length,act:redo},
       {sep:1},
       {label:'Copy',sc:MOD+'C',dis:!has,act:copySelected},
-      {label:'Paste',sc:MOD+'V',dis:!clip,act:pasteLayers},
-      {label:'Paste from Clipboard…',act:pasteDialog},
+      {label:'Paste',sc:MOD+'V',act:editPaste},
       {sep:1},
       {hd:'Arrange'},
       {label:'Bring to Front',sc:'Shift+]',dis:!has,act:()=>arrange('front')},
@@ -1569,7 +1671,7 @@ function renderOptbar(){
       el('button',{class:'zoomlbl',title:`Fit poster to window (${MOD}0)`,'aria-label':'Zoom level, click to fit',onclick:zoomFit,text:Math.round(viewZoom*100)+'%'}),
       ib('hand','Hand tool: drag to move the canvas (H, or hold Space)',()=>setTool(tool==='hand'?'select':'hand'),false,tool==='hand')),
     el('span',{class:'vsep'}),
-    el('div',{class:'grp'},ib('grid','Composition grid (rule of thirds)',toggleGrid,false,P.settings.grid),ib('magnet','Sticky guides: snap to the grid while dragging',toggleSnap,false,UI.snap!==false),ib('refs','Show reference images',toggleRefs,false,P.settings.showRefs!==false),ib('previews','Preview all layouts',()=>setPreviewMode(!previewMode),false,previewMode)),
+    el('div',{class:'grp'},ib('grid','Composition grid (rule of thirds)',toggleGrid,false,P.settings.grid),ib('magnet','Sticky guides: snap to the grid while dragging',toggleSnap,false,UI.snap!==false),ib('previews','Preview all layouts',()=>setPreviewMode(!previewMode),false,previewMode)),
     el('span',{class:'vsep'}),
     el('div',{class:'grp'},ib('undo',`Undo (${MOD}Z)`,undo,!HIST.undo.length),ib('redo',`Redo (${MOD}Shift+Z)`,redo,!HIST.redo.length)),
     el('span',{class:'vsep'}),
@@ -1613,11 +1715,12 @@ function renderLayers(){
     const selc=el('select',{'aria-label':`Category of ${L.name}`},...CATS.map(([v,t])=>el('option',{value:v,selected:L.category===v,text:t})));
     selc.value=L.category;selc.addEventListener('change',()=>setCategory(L,selc.value));
     const nm=el('span',{text:L.name,title:`${L.name} — double-click to rename`});
-    const li=el('li',{class:'layer'+(isRef(L)?' ref':''),'aria-selected':String(sel.has(L.id)),'data-id':L.id,draggable:'true'},
+    const li=el('li',{class:'layer'+(isRef(L)?' ref':'')+(L.locked?' locked':''),'aria-selected':String(sel.has(L.id)),'data-id':L.id,draggable:'true'},
+      el('button',{class:'lock'+(L.locked?' on':''),title:L.locked?'Unlock layer':'Lock layer in place','aria-label':L.locked?`Unlock ${L.name}`:`Lock ${L.name}`,'aria-pressed':String(!!L.locked),html:icon(L.locked?'lock':'unlock'),onclick:e=>{e.stopPropagation();edit(()=>{L.locked=!L.locked;},{animate:false});}}),
       el('button',{class:'eye'+(L.visible?'':' off'),title:L.visible?'Hide layer':'Show layer','aria-label':L.visible?`Hide ${L.name}`:`Show ${L.name}`,html:icon(L.visible?'eye':'eyeOff'),onclick:e=>{e.stopPropagation();edit(()=>{L.visible=!L.visible;},{animate:false});}}),
       el('img',{class:'thumb',src:A.thumb,alt:''}),
       el('div',{class:'nm'},nm,ov?el('span',{class:'ovdot',title:`Custom position in ${ratioBy(rk).name}`}):null,hiddenHere?el('span',{class:'hid',text:'hidden here'}):null),
-      L.type==='text'?el('span',{class:'tchip',text:'Text'}):selc,el('div',{class:'op'},rng,num,el('span',{class:'pct',text:'%'})));
+      el('div',{class:'op'},rng,num,el('span',{class:'pct',text:'%'})));
     li.addEventListener('click',e=>{if(e.target.closest('input,select,button'))return;
       if(e.shiftKey||e.metaKey||e.ctrlKey){sel.has(L.id)?sel.delete(L.id):sel.add(L.id);}else sel=new Set([L.id]);refreshSelection();});
     nm.addEventListener('dblclick',()=>{
@@ -1653,11 +1756,20 @@ function renderProps(){
     const L=Ls[0],A=assetOf(L);
     if(L.type==='text')textProps(L,body);
     else body.append(el('div',{class:'prow'},el('span',{class:'k',text:'Image'}),el('span',{class:'v',text:`${A.w} × ${A.h} PNG`})));
-    if(isRef(L)){
-      body.append(el('p',{class:'hint',text:'Reference posters guide Automate and your own placement. They stay out of exports unless you include them in the export options.'}));
-      body.append(el('div',{class:'prow'},el('span',{class:'k',text:'Ratio'}),el('span',{class:'v',text:(()=>{const [a,b]=reduceRatio(A.w,A.h);return a<=400?`${a}:${b}`:`${fmt(A.w/A.h,3)}:1`;})()})));
-      return;
+    if(L.type!=='text'&&isRef(L)){
+      body.append(el('p',{class:'hint'},'Automate found your other images inside this one, so it’s used as a reference poster: shown faded and never exported. ',
+        el('button',{class:'linkbtn',type:'button',text:'Use as a normal image',onclick:()=>roleChange(L,'reference')})));
     }
+    // "Fill the poster" sits with the scale options (images only, not references)
+    let fillSw=null;
+    if(L.type!=='text'&&!isRef(L)){
+      const hint='Always covers the whole poster without stretching. Drag to pick the crop, drag a corner to zoom.';
+      const i=el('input',{type:'checkbox',role:'switch',checked:isBg(L)});i.addEventListener('change',()=>roleChange(L,'background'));
+      fillSw=el('div',{class:'roleopt'},el('label',{class:'switch',title:hint},i,el('span',{class:'track','aria-hidden':'true'}),el('span',{text:'Fill the poster'})),el('small',{text:hint}),
+        L.catAuto&&isBg(L)?el('small',{text:'Set automatically by Automate. Switch it off if that’s not what you want.'}):null);
+    }
+    if(isRef(L))body.append(el('div',{class:'prow'},el('span',{class:'k',text:'Ratio'}),el('span',{class:'v',text:(()=>{const [a,b]=reduceRatio(A.w,A.h);return a<=400?`${a}:${b}`:`${fmt(A.w/A.h,3)}:1`;})()})));
+    if(L.locked){body.append(el('p',{class:'hint',text:'Locked: it can’t be moved, scaled or rotated until you unlock it. Automate leaves it alone too.'}));return;}
     const pl=E.effective(P,L,rk),ov=E.hasOverride(P,L.id,rk),b=boxOf(L,pl);
     body.append(el('div',{class:'status'+(ov?' ovr':'')},el('span',{class:'dot'}),
       el('span',{class:'grow',text:ov?`Custom position in ${r.name}`:'Follows the shared layout'}),
@@ -1665,8 +1777,8 @@ function renderProps(){
     body.append(el('p',{class:'hint',text:scope==='shared'?`Edits update every layout${ov?' and remove this custom position':''}.`:`Edits only change ${r.name}.`}));
     const apply=fn=>{edit(()=>{const p={...E.effective(P,L,rk)};fn(p);writePl(L.id,p);});notifyDropped();};
     body.append(el('div',{class:'prow'},el('span',{class:'k',text:isBg(L)?'Focal point':'Position'}),el('div',{class:'pair'},
-      numField('pf-ax','X',fmt(pl.ax*100,1),'%',v=>apply(p=>p.ax=isBg(L)?clamp(v/100,0,1):v/100),.5),
-      numField('pf-ay','Y',fmt(pl.ay*100,1),'%',v=>apply(p=>p.ay=isBg(L)?clamp(v/100,0,1):v/100),.5))));
+      numField('pf-ax','X',fmt(posFrac(pl,b,'x')*100,1),'%',v=>apply(p=>{p.ax=isBg(L)?clamp(v/100,0,1):v/100;delete p.dx;}),.5),
+      numField('pf-ay','Y',fmt(posFrac(pl,b,'y')*100,1),'%',v=>apply(p=>{p.ay=isBg(L)?clamp(v/100,0,1):v/100;delete p.dy;}),.5))));
     if(isBg(L)) body.append(el('div',{class:'prow'},el('span',{class:'k',text:'Zoom'}),numField('pf-z','',fmt((pl.zoom||1)*100,0),'%',v=>apply(p=>p.zoom=clamp(v/100,1,100)))));
     else body.append(el('div',{class:'prow'},el('span',{class:'k',text:'Size / rotate'}),el('div',{class:'pair'},
       numField('pf-s','S',fmt(pl.s*100,1),'%',v=>apply(p=>{p.s=Math.max(.005,v/100);const T=curFrame,a=assetOf(L),ar=(a.w/a.h)*(p.ar||1),D=Math.sqrt(T.w*T.h),w=p.s*D*Math.sqrt(ar),h=p.s*D/Math.sqrt(ar);if(w>T.w+.5||h>T.h+.5)p.free=true;else delete p.free;}),.5),
@@ -1685,10 +1797,11 @@ function renderProps(){
         el('button',{class:'btn small',title:'Straighten (0°)',onclick:()=>apply(p=>p.rot=0),text:'0°'}))));
       body.append(el('p',{class:'hint',text:'You can also rotate on the canvas: drag just outside any corner, or the round handle above the box. Hold Shift to snap to 15°.'}));
     }
+    body.append(el('div',{class:'prow'},el('span',{class:'k',text:'Grid area'}),el('span',{class:'v',text:E.gridCell(b,curFrame.w,curFrame.h)})));
     if(!isBg(L))body.append(el('div',{class:'prow'},el('span',{class:'k',text:'Scale'}),el('div',{class:'pair'},
       el('button',{class:'btn small',title:'Largest size that shows all of it inside the poster',onclick:()=>scaleToCanvas(L,'fit'),text:'Scale to fit'}),
       el('button',{class:'btn small',title:'Smallest size that covers the whole poster',onclick:()=>scaleToCanvas(L,'fill'),text:'Scale to fill'}))));
-    body.append(el('div',{class:'prow'},el('span',{class:'k',text:'Grid area'}),el('span',{class:'v',text:E.gridCell(b,curFrame.w,curFrame.h)})));
+    if(fillSw)body.append(fillSw);
     if(!isBg(L)){
       const tog=(key,label,hint)=>{const i=el('input',{type:'checkbox',role:'switch',checked:!!UI[key]});i.addEventListener('change',()=>{UI[key]=i.checked;saveUI();});
         return el('label',{class:'switch',title:hint},i,el('span',{class:'track','aria-hidden':'true'}),el('span',{text:label}));};
@@ -1718,10 +1831,6 @@ function renderProps(){
     el('span',{class:'grow',text:rk===P.baseRatio?'Base layout. Its positions are the shared layout.':n?`${n} layer${n>1?'s have':' has'} a custom position here`:'Follows the shared layout'}),
     n?el('button',{class:'btn small',onclick:()=>resetLayout(),text:'Reset'}):null,
     rk!==P.baseRatio?el('button',{class:'btn small',onclick:makeBase,text:'Make base'}):null));
-  const col=el('input',{type:'color',value:P.settings.canvasColor,'aria-label':'Canvas colour'});
-  let colBefore=null;col.addEventListener('input',()=>{if(!colBefore)colBefore=snap();P.settings.canvasColor=col.value;requestDraw();schedulePreviews();});
-  col.addEventListener('change',()=>{if(colBefore&&snap()!==colBefore)pushUndo(colBefore);colBefore=null;});
-  body.append(el('div',{class:'prow'},el('span',{class:'k',text:'Canvas colour'}),el('div',{class:'colorrow'},col,el('span',{class:'v',text:'shows where no background covers'}))));
   const ed=exportDims(rk);
   body.append(el('div',{class:'prow'},el('span',{class:'k',text:'Export size'}),el('span',{class:'v',text:`${ed.w} × ${ed.h} px`})));
   body.append(el('p',{class:'hint',text:'Select a layer on the canvas or in the list to edit it. Layouts with a yellow dot have their own positions.'}));
@@ -1739,18 +1848,11 @@ function renderSaveState(){
   s.textContent=dirty?'Unsaved changes':(lastSavedName?'Saved':'Not saved');
   if(document.activeElement!==$('#docname'))$('#docname').value=P.meta.name;
 }
-function renderEmpty(){
-  const e=$('#empty');const none=!P.layers.length;e.hidden=!none||previewMode;
-  if(!none)return;e.innerHTML='';
-  e.append(el('div',{class:'card'},el('h2',{text:'Start your poster'}),
-    el('p',{text:'Import your background, logo and supporting images. Add reference posters if you want Automate to follow an existing design.'}),
-    el('div',{class:'row'},el('button',{class:'btn primary',onclick:importAssetsFlow,text:'Import assets'}),el('button',{class:'btn',onclick:importRefsFlow,text:'Import references'})),
-    el('div',{class:'row'},el('button',{class:'btn ghost small',onclick:openFlow,text:'Open a saved project'}),el('button',{class:'btn ghost small',onclick:()=>loadSample(),text:'Open the sample project'})),
-    resumable?el('button',{class:'btn small',onclick:resumeSession,title:`Autosaved in this browser ${new Date(resumable.at).toLocaleString()}`,text:`Resume “${resumable.obj.meta.name}”`}):null));
-}
+function renderEmpty(){$('#empty').hidden=true;}
 /* Collapsible UI: option bar, layout tabs, layers and properties. Remembered in this browser. */
 const UI={notools:false,notabs:false,dockCollapsed:false,pane:'layers',layersCollapsed:false,propsCollapsed:false,scaleProp:true,scaleCenter:false,snap:true};
 try{Object.assign(UI,JSON.parse(localStorage.getItem('up-ui')||'{}'));}catch(e){}
+Object.assign(UI,{dockCollapsed:false,pane:'layers',layersCollapsed:false});   // the Layers tab is always open when the app starts
 const CHEV='<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 10l4-4 4 4"/></svg>';
 function saveUI(){try{localStorage.setItem('up-ui',JSON.stringify(UI));}catch(e){}}
 function applyUI(){
@@ -1773,10 +1875,8 @@ function refreshSelection(){renderLayers();renderProps();renderOptbar();renderMe
 function refreshAll(){if(typeof clampPan==='function'&&SW){clampPan();curFrame=frameRect(aspectOf(P.activeRatio));}renderMenus();renderOptbar();renderTabs();renderLayers();renderProps();renderStatus();renderSaveState();renderEmpty();requestDraw();schedulePreviews();}
 $('#docname').addEventListener('change',e=>{const v=e.target.value.trim()||'Untitled poster';P.meta.name=v;markDirty();});
 $('#docname').addEventListener('keydown',e=>{if(e.key==='Enter')e.target.blur();e.stopPropagation();});
-$('#btnImport').onclick=e=>{e.stopPropagation();popMenu($('#btnImport'),[
-  {label:'Import images…',sc:MOD+'I',act:importAssetsFlow},
-  {label:'Add text',act:()=>addTextLayer()},
-  {label:'Paste from clipboard…',sc:MOD+'V',act:pasteDialog}]);};$('#btnImportRef').onclick=importRefsFlow;
+$('#btnImport').title=`Import images (${MOD}I)`;
+$('#btnImport').onclick=()=>importAssetsFlow();$('#btnText').onclick=()=>addTextLayer();
 $('#lFront').innerHTML=icon('front');$('#lFwd').innerHTML=icon('forward');$('#lBack').innerHTML=icon('backward');$('#lBottom').innerHTML=icon('back');$('#lDup').innerHTML=icon('dup');$('#lDel').innerHTML=icon('trash');
 $('#lFront').onclick=()=>arrange('front');$('#lFwd').onclick=()=>arrange('forward');$('#lBack').onclick=()=>arrange('backward');$('#lBottom').onclick=()=>arrange('back');$('#lDup').onclick=duplicateSelected;$('#lDel').onclick=deleteSelected;
 function toggleSnap(){setUI({snap:UI.snap===false});toast(UI.snap?'Sticky guides on':'Sticky guides off');}
@@ -2163,9 +2263,9 @@ const foundText=f=>`${f.method==='detail'?`found by detail matching (${f.inliers
 
 /* Edit › Align to Reference: snap the selected layers onto where they appear in the reference shown on the canvas. */
 async function alignToReference(){
-  const Ls=[...sel].map(layerBy).filter(L=>L&&!isRef(L)&&L.visible);
+  const Ls=[...sel].map(layerBy).filter(L=>L&&!isRef(L)&&L.visible&&!L.locked);
   if(!Ls.length)return toast('Select a logo, asset or background to align');
-  const refs=P.layers.filter(isRef);if(!refs.length)return toast('Import a reference poster first (File › Import Reference Posters)','error');
+  const refs=P.layers.filter(isRef);if(!refs.length)return toast('No reference poster yet. Run Automate to find one among your images','error');
   const A=aspectOf(P.activeRatio),vis=refs.filter(R=>R.visible),pool=vis.length?vis:refs;
   const R=pool.slice().sort((a,b)=>Math.abs(Math.log(assetOf(a).w/assetOf(a).h/A))-Math.abs(Math.log(assetOf(b).w/assetOf(b).h/A)))[0];
   const RA=assetOf(R),rimg=getImg(RA.id);
@@ -2174,7 +2274,7 @@ async function alignToReference(){
   const boxes=res.filter(r=>r[1]).map(r=>r[1]),bgs=[];
   for(const L of Ls.filter(isBg)){const ba=assetOf(L),fit=fitBackground(getImg(ba.id),ba,rimg,RA.w/RA.h,boxes);bgs.push([L,fit?{...fit,...await refineBg(getImg(ba.id),ba,rimg,RA,fit,boxes)}:null]);}
   levelCache.clear();
-  const W=curFrame.w,H=curFrame.h,rb=E.box(R,RA,{},W,H);
+  const W=curFrame.w,H=curFrame.h,rb=E.box(R,RA,E.effective(P,R,P.activeRatio),W,H);
   const done=[],missed=[];
   edit(()=>{
     for(const [L,m] of res){if(!m){missed.push(L.name);continue;}
@@ -2331,16 +2431,31 @@ function keepAssetInFrame(L,pl,A){
   const fixed=E.fromBox(L,as,b,T.W,T.H,pl);return plDiffers(L,pl,fixed,A)?fixed:pl;
 }
 async function runAutomate(opt,progress){
-  const rep=[],frac=(f,t)=>progress(f,t);
+  const rep=[],frac=(f,t)=>progress(f,t);let created_refs=[];
+  // Reference posters: when none are marked, an opaque image that contains your other artwork is treated as one.
+  if(!P.layers.some(isRef)){
+    const opq=P.layers.filter(L=>L.type!=='text'&&L.catAuto!==false&&L.category!=='background'&&!L.locked&&assetOf(L).stats.opaque>.97);
+    const art=P.layers.filter(L=>L.type!=='text'&&assetOf(L).stats.transparent>.03).sort((a,b)=>assetOf(b).w*assetOf(b).h-assetOf(a).w*assetOf(a).h).slice(0,3);
+    if(opq.length&&art.length){const found=[];
+      for(const [i,R] of opq.entries()){progress(.02+.03*i/opq.length,`Checking whether ${R.name} is a reference poster`);const RA=assetOf(R);let hits=0;
+        for(const L of art){const m=await locateAsset(getImg(RA.id),RA,L);if(m&&m.quality==='good'){hits++;break;}}
+        if(hits)found.push(R);}
+      for(const R of found){R.category='reference';R.catAuto=true;if(R.opacity>.99)R.opacity=.5;P.layouts.shared[R.id]=E.defaultPlacement(R);
+        const i=P.layers.indexOf(R);P.layers.splice(i,1);P.layers.push(R);}
+      if(found.length){created_refs=found;}
+    }
+  }
   const nonRef=P.layers.filter(L=>!isRef(L)),refs=P.layers.filter(isRef);
+  if(created_refs.length){rep.push(['h','Reference posters']);created_refs.forEach(R=>rep.push(['',`<b>${esc(R.name)}</b> contains your other images, so it’s used as a reference poster: shown faded and never exported. If it’s wrong, choose Use as a normal image in its Properties.`]));
+    for(const R of created_refs){const a=assetOf(R);if(!P.ratios.some(r=>Math.abs(Math.log((r.w/r.h)/(a.w/a.h)))<.012)){const rk=ratioKeyFor(a.w,a.h);rep.push(['',`Added the layout <b>${esc(ratioBy(rk).name)}</b> to match ${esc(R.name)}`]);}}}
   // Scope: with layers selected, only those layers are automated; everything else stays exactly as it is.
-  const only=opt.only&&opt.only.size?opt.only:null,inScope=L=>!only||only.has(L.id);
+  const only=opt.only&&opt.only.size?opt.only:null,inScope=L=>!L.locked&&(!only||only.has(L.id));
   const beforeEff={};for(const r of P.ratios){beforeEff[r.key]={};for(const L of nonRef)beforeEff[r.key][L.id]={...E.effective(P,L,r.key)};}
   // 1. Background recognition
   if(opt.classify){
     rep.push(['h','Asset recognition']);
-    if(only)rep.push(['',`Automating only the selected layer${only.size>1?'s':''}: ${P.layers.filter(L=>only.has(L.id)&&!isRef(L)).map(L=>`<b>${esc(L.name)}</b>`).join(', ')}`]);
-    const userBg=nonRef.find(L=>isBg(L)&&(!L.catAuto||!inScope(L)));
+    if(only&&nonRef.some(L=>!L.locked&&!only.has(L.id)))rep.push(['',`Automating only the selected layer${only.size>1?'s':''}: ${P.layers.filter(L=>only.has(L.id)&&!isRef(L)).map(L=>`<b>${esc(L.name)}</b>`).join(', ')}`]);
+    const userBg=nonRef.find(L=>isBg(L)&&!isStarter(L)&&(!L.catAuto||!inScope(L)));   // the plain starter background doesn't count
     if(userBg)rep.push(['',`<b>${esc(userBg.name)}</b> is the background (set by you)`]);
     else{const cands=nonRef.filter(L=>inScope(L)&&L.type!=='text'),maxA=Math.max(...cands.map(L=>assetOf(L).w*assetOf(L).h));
       const sc=L=>{const a=assetOf(L);return (BG_RX.test(L.name)?3:0)+(a.stats.opaque>.97?2:0)+(a.w*a.h)/maxA;};
@@ -2444,7 +2559,7 @@ const a2=L=>{const s=assetOf(L).stats;return s.opaque>.97?'opaque, largest image
 const selectedAssets=()=>new Set([...sel].filter(id=>{const L=layerBy(id);return L&&!isRef(L);}));
 function automateDialog(){
   const nonRef=P.layers.filter(L=>!isRef(L)),refs=P.layers.filter(isRef),only=selectedAssets();
-  if(!nonRef.length)return toast('Import some poster assets first. Automate arranges them for you.','error');
+  if(!nonRef.length&&!refs.length)return toast('Import some images first. Automate arranges them for you.','error');
   const manual=P.ratios.filter(r=>P.layouts.meta[r.key]&&P.layouts.meta[r.key].manual);
   const cls=el('input',{type:'checkbox',checked:true}),pres=el('input',{type:'checkbox',checked:manual.length>0});
   const body=[
@@ -2492,7 +2607,7 @@ async function startAutomate(opt){
 }
 /* Asked right after imports once the project has both reference posters and assets. */
 function askAutomate(){
-  if(!P.layers.some(isRef)||!P.layers.some(L=>!isRef(L)))return;
+  if(P.layers.filter(L=>L.type!=='text'&&!isStarter(L)).length<2)return;
   const manual=P.ratios.some(r=>P.layouts.meta[r.key]&&P.layouts.meta[r.key].manual);
   const only=selectedAssets(),all=P.layers.filter(L=>!isRef(L)).length;
   modal({title:'Apply Automate?',body:[el('p',{class:'ask',text:'Would you like to apply the automate function?'}),
@@ -2563,7 +2678,7 @@ function serialize(mode){
     const rec={id:a.id,name:a.name,w:a.w,h:a.h,kind:ref?'reference':'asset',stats:a.stats};
     if(mode==='embed')rec.data=a.data;else{rec.file=(ref?'references/':'assets/')+slug(a.name)+'-'+a.id.slice(-6)+'.png';files.push({name:rec.file,data:dataURLtoBytes(a.data)});}
     assets[id]=rec;}
-  const obj={format:'universal-posters',version:1,app:'Universal Posters 1.0',savedAt:new Date().toISOString(),meta:{...P.meta},settings:{...P.settings},
+  const obj={format:'universal-posters',version:2,app:'Universal Posters 1.0',savedAt:new Date().toISOString(),meta:{...P.meta},settings:{...P.settings},
     ratios:P.ratios,baseRatio:P.baseRatio,activeRatio:P.activeRatio,layers:P.layers,layouts:P.layouts,
     exportSettings:{longEdge:P.settings.exportLong,includeReferences:P.settings.exportIncludeRefs,includeGrid:P.settings.exportGrid},assets};
   return {obj:JSON.parse(JSON.stringify(obj)),files};
@@ -2584,7 +2699,7 @@ header{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:10px 16px
 header b{font-weight:600}select,button,input{font:inherit;color:inherit;background:#222b26;border:1px solid #3a4741;border-radius:6px;padding:4px 8px}button{cursor:pointer}button:disabled{opacity:.5;cursor:progress}.xp{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.xp input{width:76px}
 #stage{display:grid;place-items:center;min-height:0;overflow:hidden;padding:0}#stage[hidden]{display:none}
 #grid{display:flex;flex-wrap:wrap;gap:18px;padding:18px 16px;overflow:auto;align-content:flex-start}#grid[hidden]{display:none}
-canvas{display:block}figure{margin:0;display:grid;gap:6px;cursor:pointer}figure canvas{box-shadow:0 6px 18px rgba(0,0,0,.5)}figcaption{font-size:12px;color:#8e9c94}
+canvas{display:block}figure{margin:0;display:grid;gap:6px;cursor:pointer}figure canvas,#stage canvas{background-color:#fff;background-image:linear-gradient(45deg,#d9d9d9 25%,transparent 25%,transparent 75%,#d9d9d9 75%),linear-gradient(45deg,#d9d9d9 25%,transparent 25%,transparent 75%,#d9d9d9 75%);background-size:16px 16px;background-position:0 0,8px 8px}figure canvas{box-shadow:0 6px 18px rgba(0,0,0,.5)}figcaption{font-size:12px;color:#8e9c94}
 #note{padding:6px 16px;font-size:11.5px;color:#8e9c94;background:#161c19;border-top:1px solid #2a342f}
 </style></head><body>
 <header><b>${t}</b><span style="color:#8e9c94">Universal Posters project</span><span style="flex:1"></span>
@@ -2616,7 +2731,7 @@ async function saveProject(asNew){
   return r;
 }
 async function openFlow(){
-  if(dirty&&P.layers.length&&!await confirmModal('Open another project?','Unsaved changes in this project will be lost.','Open'))return;
+  if(dirty&&hasContent()&&!await confirmModal('Open another project?','Unsaved changes in this project will be lost.','Open'))return;
   const [f]=await pickFiles({accept:'.html,.htm,.zip,.json',multiple:false});if(!f)return;
   busyStart('Opening project…',f.name);
   try{
@@ -2652,7 +2767,10 @@ async function loadProjectObject(obj,resolver){
     np.assets[rec.id]={id:rec.id,name:rec.name,w:rec.w||img.naturalWidth,h:rec.h||img.naturalHeight,data,thumb:makeThumb(img),stats:rec.stats||computeStats(img)};imgs.set(rec.id,img);
   }
   np.layers=np.layers.filter(L=>np.assets[L.assetId]);
+  for(const L of np.layers)if(L.category==='reference'&&!(obj.version>=2)){np.layouts.shared[L.id]={ax:.5,ay:.5,s:1,rot:0,zoom:1,show:true};for(const rk in np.layouts.overrides)delete np.layouts.overrides[rk][L.id];}
   P=np;projectHandle=null;IMG.clear();imgs.forEach((v,k)=>IMG.set(k,v));HIST.undo.length=HIST.redo.length=0;sel.clear();scope=autoScope(P.activeRatio);
+  // Older projects had a canvas colour. Posters are now transparent, so that colour becomes a locked background layer.
+  {const cc=P.settings.canvasColor;if(cc&&cc!=='transparent'){P.settings.canvasColor=null;const L=addSolidBackground(P,cc);L.starter=false;}}
   if(previewMode)setPreviewMode(false);refreshAll();
 }
 function exportDims(rk,long){
@@ -2774,7 +2892,7 @@ function idb(){return new Promise((res,rej)=>{try{const r=indexedDB.open('univer
 async function idbPut(k,v){const db=await idb();return new Promise((res,rej)=>{const t=db.transaction('kv','readwrite');t.objectStore('kv').put(v,k);t.oncomplete=()=>res();t.onerror=()=>rej(t.error);});}
 async function idbGet(k){const db=await idb();return new Promise((res,rej)=>{const t=db.transaction('kv','readonly'),r=t.objectStore('kv').get(k);r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});}
 let asTimer=0;
-function scheduleAutosave(){clearTimeout(asTimer);asTimer=setTimeout(()=>{if(!P.layers.length)return;try{idbPut('autosave',{obj:serialize('embed').obj,at:Date.now()}).catch(()=>{});}catch(e){}},2500);}
+function scheduleAutosave(){clearTimeout(asTimer);asTimer=setTimeout(()=>{if(!hasContent())return;try{idbPut('autosave',{obj:serialize('embed').obj,at:Date.now()}).catch(()=>{});}catch(e){}},2500);}
 
 /* =====================================================================
    11. NEW PROJECT FLOW, SAMPLE, SPLASH
@@ -2782,7 +2900,7 @@ function scheduleAutosave(){clearTimeout(asTimer);asTimer=setTimeout(()=>{if(!P.
 /* Quit: offer to save, then close the project. A web page can't close its own tab, so a closed screen is shown. */
 async function quitApp(){
   closeMenus();
-  if(P.layers.length){
+  if(hasContent()){
     const choice=await new Promise(res=>{modal({title:'Save before quitting?',
       body:el('p',{text:(dirty||!lastSavedName)?`“${P.meta.name}” has unsaved changes. Do you want to save your project before quitting?`:`“${P.meta.name}” hasn’t changed since it was last saved. Do you want to save a copy before quitting?`}),
       onClose:()=>res('cancel'),
@@ -2791,7 +2909,7 @@ async function quitApp(){
     if(choice==='save'){const r=await saveProject(false);if(r!=='saved'){toast('Still open: the project wasn’t saved, so nothing was closed');return;}}
   }
   clearTimeout(asTimer);
-  P=newProject();projectHandle=null;IMG.clear();HIST.undo.length=HIST.redo.length=0;sel.clear();scope='shared';dirty=false;lastSavedName=null;
+  IMG.clear();P=freshProject();projectHandle=null;HIST.undo.length=HIST.redo.length=0;sel.clear();scope='shared';dirty=false;lastSavedName=null;
   if(previewMode)setPreviewMode(false);refreshAll();
   showQuitScreen();
   try{window.close();}catch(e){}
@@ -2809,20 +2927,21 @@ function showQuitScreen(){
   sc.querySelector('.btn.primary').focus();
 }
 async function newDocument(){
-  if(dirty&&P.layers.length&&!await confirmModal('Start a new document?','Unsaved changes in this project will be lost. Your last session stays in this browser’s autosave.','Start new'))return;
-  P=newProject();projectHandle=null;IMG.clear();HIST.undo.length=HIST.redo.length=0;sel.clear();scope='shared';dirty=false;lastSavedName=null;
+  if(dirty&&hasContent()&&!await confirmModal('Start a new document?','Unsaved changes in this project will be lost. Your last session stays in this browser’s autosave.','Start new'))return;
+  IMG.clear();P=freshProject();projectHandle=null;HIST.undo.length=HIST.redo.length=0;sel.clear();scope='shared';dirty=false;lastSavedName=null;
   if(previewMode)setPreviewMode(false);refreshAll();renderSaveState();
   newProjectModal();
 }
-/* No start-up prompt: the app opens on an empty poster. The empty canvas offers the same starting points
-   (import, references, sample, open, and resuming the last autosaved session). */
+/* No start-up prompt: the app opens on an empty poster. The last autosaved session (captured at start-up,
+   before this session's autosave replaces it) can be reopened from File › Resume Recent Project. */
 let resumable=null;
 async function newProjectModal(){
-  resumable=null;try{const saved=await idbGet('autosave');if(saved&&saved.obj&&saved.obj.layers&&saved.obj.layers.length)resumable=saved;}catch(e){}
+  resumable=null;try{const saved=await idbGet('autosave');if(saved&&saved.obj&&saved.obj.layers&&hasContent(saved.obj))resumable=saved;}catch(e){}
   renderEmpty();
 }
 async function resumeSession(){
-  if(!resumable)return;const saved=resumable;
+  if(!resumable)return toast('No recent project saved in this browser');const saved=resumable;
+  if(dirty&&hasContent()&&!await confirmModal('Resume your recent project?','Unsaved changes in this project will be lost.','Resume'))return;
   try{busyStart('Opening your last session…',saved.obj.meta.name);await loadProjectObject(saved.obj);dirty=true;renderSaveState();toast('Resumed your last session','ok');}
   catch(e){toast(e.message,'error');}finally{busyEnd();}
 }
@@ -2950,7 +3069,7 @@ document.addEventListener('paste',e=>{
   if(handleClipboardData(e.clipboardData))e.preventDefault();
 });
 document.addEventListener('keyup',e=>{if(e.key===' '&&spaceHand){spaceHand=false;cv.style.cursor=handActive()?'grab':'default';}});
-window.addEventListener('beforeunload',e=>{if(dirty&&P.layers.length){e.preventDefault();e.returnValue='';}});
+window.addEventListener('beforeunload',e=>{if(dirty&&hasContent()){e.preventDefault();e.returnValue='';}});
 
 /* =====================================================================
    BOOT

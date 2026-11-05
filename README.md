@@ -10,7 +10,7 @@ It runs entirely in the browser. There is no server, no build step and no accoun
 
 - **Responsive layouts:** shared positions across all aspect ratios, with per-layout overrides (marked with a yellow dot).
 - **Automate:** finds your assets inside reference posters with sub-pixel accuracy (detail matching plus a pixel-level refinement pass) and builds every layout from them. Layout priority: a reference with the layout's exact shape first, then any other reference, then centring on the focal point.
-- **Photoshop-style editing:** layers with categories, opacity and visibility; move, scale (proportional or free, from a corner or the centre) and rotate; sticky alignment guides; rule-of-thirds grid; zoom and hand tool; undo and redo.
+- **Photoshop-style editing:** layers with opacity, visibility and locking; move, scale (proportional or free, from a corner or the centre) and rotate; sticky alignment guides; rule-of-thirds grid; zoom and hand tool; undo and redo.
 - **Text layers:** common fonts, size, bold and italic, colour and stroke. Shown automatically in thin layouts (banners and strips) where a logo has too little room.
 - **Saving and exporting:** projects save as a single editable `.html` file that also works as a responsive preview. Export a PNG, all layouts as PNGs, all layouts as a ZIP, or a full project package.
 
