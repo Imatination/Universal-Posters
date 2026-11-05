@@ -174,7 +174,7 @@ button{cursor:pointer}
 .pnl-h .count{font:11px var(--mono);color:var(--faint)}
 .pnl-h .sp{flex:1}
 #layers{list-style:none;margin:0;padding:4px;overflow:auto;min-height:60px}
-.layer{display:grid;grid-template-columns:24px 24px 24px 40px minmax(0,1fr);grid-template-areas:"eye lock link thumb name" "eye lock link thumb op";column-gap:7px;row-gap:3px;align-items:center;padding:6px 6px 6px 4px;border-radius:6px;border:1px solid transparent;margin-bottom:2px;cursor:default}
+.layer{display:grid;grid-template-columns:18px 24px 24px 24px 40px minmax(0,1fr);grid-template-areas:"pick eye lock link thumb name" "pick eye lock link thumb op";column-gap:7px;row-gap:3px;align-items:center;padding:6px 6px 6px 4px;border-radius:6px;border:1px solid transparent;margin-bottom:2px;cursor:default}
 .layer:hover{background:var(--panel-2)}
 .layer[aria-selected="true"]{background:#24332b;border-color:#3b5a46}
 .layer.ref{background-image:repeating-linear-gradient(135deg,transparent 0 7px,rgba(255,255,255,.025) 7px 14px)}
@@ -183,6 +183,8 @@ button{cursor:pointer}
 .layer .lock{grid-area:lock;width:24px;height:24px;display:grid;place-items:center;background:none;border:0;border-radius:4px;color:var(--faint)}
 .layer .lock:hover{background:var(--line);color:var(--muted)}
 .layer .lock.on{color:var(--accent)}
+.layer .pick{grid-area:pick;margin:0;width:16px;height:16px;accent-color:var(--accent);cursor:pointer}
+#selAll{margin:0 2px 0 4px;width:16px;height:16px;accent-color:var(--accent);cursor:pointer}
 .layer .link{grid-area:link;width:24px;height:24px;display:grid;place-items:center;background:none;border:0;border-radius:4px;color:var(--faint)}
 .layer .link:hover{background:var(--line);color:var(--muted)}
 .layer .link.on{color:var(--accent)}
@@ -442,7 +444,7 @@ select option{background:var(--panel);color:#c2ccc6}
         <span class="sp"></span><button class="ib" id="dockToggle" aria-label="Hide panels" title="Hide panels"></button>
       </div>
       <section class="pnl" id="layersPnl" aria-label="Layers">
-        <div class="pnl-h"><button class="ib chev" data-collapse="layers" aria-label="Collapse layers" title="Collapse"></button><h3>Layers</h3><span class="count" id="lcount"></span><span class="sp"></span>
+        <div class="pnl-h"><button class="ib chev" data-collapse="layers" aria-label="Collapse layers" title="Collapse"></button><input type="checkbox" id="selAll" aria-label="Select all layers" title="Select all layers"><h3>Layers</h3><span class="count" id="lcount"></span><span class="sp"></span>
           <button class="btn small ghost" id="btnImport" title="Import images">Import</button><button class="btn small ghost" id="btnText" title="Add a text layer">Text</button><button class="btn small ghost" id="btnDraw" title="Draw on a new layer">Draw</button>
         </div>
         <ul id="layers" aria-label="Layer list"></ul>
@@ -1689,7 +1691,7 @@ function menuDefs(){
       {label:'Left Edges',dis:!has,act:()=>align('left')},{label:'Horizontal Centres',dis:!has,act:()=>align('center')},{label:'Right Edges',dis:!has,act:()=>align('right')},
       {label:'Top Edges',dis:!has,act:()=>align('top')},{label:'Vertical Centres',dis:!has,act:()=>align('middle')},{label:'Bottom Edges',dis:!has,act:()=>align('bottom')},
       {label:'Distribute Horizontally',dis:!has,act:()=>align('distH')},{label:'Distribute Vertically',dis:!has,act:()=>align('distV')},
-      {label:'Align to Reference',sc:MOD+'Shift+L',dis:!has||!P.layers.some(isRef),act:alignToReference},
+      {label:'Align to Reference',sc:MOD+'Shift+L',act:()=>alignToSimilar(sel)},
       {sep:1},
       {label:'Duplicate',sc:MOD+'D',dis:!has,act:duplicateSelected},
       {label:'Delete',sc:'Del',dis:!has,act:deleteSelected},
@@ -1698,7 +1700,7 @@ function menuDefs(){
       {label:'Cut Out…',dis:!cutTarget(),act:startCut},
       {label:'Remove Background',dis:!cutTarget(),act:autoCutout},
       {sep:1},
-      {label:'Automate…',sc:MOD+'Shift+A',act:()=>automateDialog()},
+      {label:'Automate',sc:MOD+'Shift+A',act:()=>alignToSimilar(sel)},
     ],
     View:[
       {label:'Toggle Composition Grid',sc:"'",check:P.settings.grid,act:toggleGrid},
@@ -1781,7 +1783,7 @@ function renderOptbar(){
     el('div',{class:'grp'},ib('undo',`Undo (${MOD}Z)`,undo,!HIST.undo.length),ib('redo',`Redo (${MOD}Shift+Z)`,redo,!HIST.redo.length)),
     el('span',{class:'vsep'}),
     el('button',{class:'btn cutbtn','aria-pressed':String(!!cut),title:'Cut out: draw loosely around part of an image to keep just that part',onclick:startCut,html:icon('scissors')+'<span>Cut out</span>'}),
-    el('button',{class:'btn primary',title:'Build layouts for every aspect ratio from your assets and references',onclick:()=>automateDialog(),html:icon('wand')+'<span>Automate</span>'}),
+    el('button',{class:'btn primary',title:'Automate: line the selected layers (or all of them) up with matching images below them, in every aspect ratio',onclick:()=>alignToSimilar(sel),html:icon('wand')+'<span>Automate</span>'}),
     el('button',{class:'ib bar-end',title:'Hide the toolbar','aria-label':'Hide the toolbar',onclick:()=>setUI({notools:true}),html:CHEV}));
 }
 function ratioGlyph(r){const A=r.w/r.h,m=14;let w=m,h=m/A;if(h>m){h=m;w=m*A;}return el('span',{class:'glyph'},el('i',{style:`width:${Math.max(2,w)}px;height:${Math.max(2,h)}px`}));}
@@ -1803,6 +1805,7 @@ function renderTabs(){
 
 let dragLayerId=null;
 function renderLayers(){
+  {const sa=$('#selAll');if(sa){const n=P.layers.filter(L=>sel.has(L.id)).length;sa.checked=n>0&&n===P.layers.length;sa.indeterminate=n>0&&n<P.layers.length;sa.title=n===P.layers.length&&n?'Deselect all layers':'Select all layers';}}
   {const db=$('#btnDraw');if(db){db.classList.toggle('on',!!pen);db.textContent=pen?'Done':'Draw';}}
   const ul=$('#layers');ul.innerHTML='';
   $('#lcount').textContent=P.layers.length?String(P.layers.length):'';
@@ -1823,6 +1826,7 @@ function renderLayers(){
     selc.value=L.category;selc.addEventListener('change',()=>setCategory(L,selc.value));
     const nm=el('span',{text:L.name,title:`${L.name} — double-click to rename`});
     const li=el('li',{class:'layer'+(isRef(L)?' ref':'')+(L.locked?' locked':''),'aria-selected':String(sel.has(L.id)),'data-id':L.id,draggable:'true'},
+      el('input',{type:'checkbox',class:'pick',checked:sel.has(L.id),'aria-label':`Select ${L.name}`,title:'Select',onclick:e=>e.stopPropagation(),onchange:e=>{if(e.target.checked)sel.add(L.id);else sel.delete(L.id);refreshSelection();}}),
       el('button',{class:'lock'+(L.locked?' on':''),title:L.locked?'Unlock layer':'Lock layer in place','aria-label':L.locked?`Unlock ${L.name}`:`Lock ${L.name}`,'aria-pressed':String(!!L.locked),html:icon(L.locked?'lock':'unlock'),onclick:e=>{e.stopPropagation();edit(()=>{L.locked=!L.locked;},{animate:false});}}),
       el('button',{class:'link'+(L.linked!==false?' on':''),title:L.linked!==false?'Linked: edits apply to every aspect ratio. Click to edit this aspect ratio only':'Unlinked: edits only change this aspect ratio. Click to link','aria-label':L.linked!==false?`Unlink ${L.name} across aspect ratios`:`Link ${L.name} across aspect ratios`,'aria-pressed':String(L.linked!==false),html:icon(L.linked!==false?'link':'unlink'),onclick:e=>{e.stopPropagation();edit(()=>{L.linked=L.linked===false;},{animate:false});toast(L.linked!==false?`${L.name} is linked: edits apply to every aspect ratio`:`${L.name} is unlinked: edits only change the aspect ratio you're editing`);}}),
       el('button',{class:'eye'+(L.visible?'':' off'),title:L.visible?'Hide layer':'Show layer','aria-label':L.visible?`Hide ${L.name}`:`Show ${L.name}`,html:icon(L.visible?'eye':'eyeOff'),onclick:e=>{e.stopPropagation();edit(()=>{L.visible=!L.visible;},{animate:false});}}),
@@ -2017,6 +2021,7 @@ function refreshSelection(){renderLayers();renderProps();renderOptbar();renderMe
 function refreshAll(){if(typeof clampPan==='function'&&SW){clampPan();curFrame=frameRect(aspectOf(P.activeRatio));}renderMenus();renderOptbar();renderTabs();renderLayers();renderProps();renderStatus();renderSaveState();renderEmpty();requestDraw();schedulePreviews();}
 $('#docname').addEventListener('change',e=>{const v=e.target.value.trim()||'Untitled poster';P.meta.name=v;markDirty();});
 $('#docname').addEventListener('keydown',e=>{if(e.key==='Enter')e.target.blur();e.stopPropagation();});
+$('#selAll').onchange=()=>{const all=P.layers.length&&P.layers.every(L=>sel.has(L.id));sel=all?new Set():new Set(P.layers.map(L=>L.id));refreshSelection();};
 $('#btnImport').title=`Import images (${MOD}I)`;
 $('#btnImport').onclick=()=>importAssetsFlow();$('#btnText').onclick=()=>{if(pen)endDraw();addTextLayer();};$('#btnDraw').onclick=()=>pen?endDraw():startDraw(null);
 $('#lFront').innerHTML=icon('front');$('#lFwd').innerHTML=icon('forward');$('#lBack').innerHTML=icon('backward');$('#lBottom').innerHTML=icon('back');$('#lDup').innerHTML=icon('dup');$('#lDel').innerHTML=icon('trash');
@@ -2404,7 +2409,67 @@ const pixelText=err=>isFinite(err)?`pixel match ${Math.max(0,100-err/2.55).toFix
 const foundText=f=>`${f.method==='detail'?`found by detail matching (${f.inliers} points)`:'found by shape search'}${f.rot?`, rotated ${f.rot}°`:''} · ${pixelText(f.err)}`;
 
 /* Edit › Align to Reference: snap the selected layers onto where they appear in the reference shown on the canvas. */
-async function alignToReference(){
+/* Automate / Edit › Align to Reference: each selected layer (or every image when nothing is selected) looks for
+   itself inside the images below it in the Layers panel (nearest first, then the ones above if nothing below
+   matches), and is moved, scaled and turned to sit exactly over where it appears there, in every aspect ratio
+   (or only this one, for an unlinked layer). */
+async function alignToSimilar(only){
+  if(textEdit)finishTextEdit();if(pen)endDraw();if(cut)endCut(true);
+  const ok=L=>L&&isImg(L)&&!isStarter(L)&&!L.locked;
+  let Ls=only&&only.size?[...only].map(layerBy).filter(ok):[];
+  if(!Ls.length)Ls=P.layers.filter(ok);
+  if(Ls.length<1||P.layers.filter(L=>isImg(L)&&!isStarter(L)).length<2)return toast('Import the artwork and the finished poster (or any image that contains it) first. Automate lines each layer up with a matching image below it.','error');
+  const area=L=>assetOf(L).w*assetOf(L).h,found=[],missed=[];
+  busyStart('Automate','Looking for matching images…');
+  try{
+    for(const [n,L] of Ls.entries()){
+      const i=P.layers.indexOf(L),cand=x=>x!==L&&isImg(x)&&!isStarter(x)&&!Ls.includes(x)||(x!==L&&isImg(x)&&!isStarter(x)&&area(x)>area(L)*1.2);
+      const below=P.layers.slice(0,i).filter(cand).reverse().slice(0,4),above=P.layers.slice(i+1).filter(cand).slice(0,2);
+      let best=null;
+      for(const C of [...below,...above]){
+        busyUpdate(null,`${n+1} of ${Ls.length} · ${L.name} in ${C.name}`);await sleep(0);
+        const CA=assetOf(C);let m=null;try{m=await locateAsset(getImg(CA.id),CA,L);}catch(e){console.warn(e);}
+        if(m&&(!best||m.err<best.m.err))best={C,m};
+        if(m&&m.quality==='good')break;
+      }
+      if(best&&best.m.err<=40)found.push({L,...best});else missed.push(L);
+    }
+    // a photo used as a background is usually cropped in the finished poster: match it as a crop instead
+    for(const L of [...missed]){const A=assetOf(L);if(!(A.stats&&A.stats.opaque>.97))continue;
+      const hosts=[...new Set(found.map(f=>f.C))].concat(P.layers.filter(x=>x!==L&&isImg(x)&&!isStarter(x)&&!found.some(f=>f.C===x))).slice(0,3);
+      for(const C of hosts){if(C===L)continue;const CA=assetOf(C),RA=CA.w/CA.h,boxes=found.filter(f=>f.C===C).map(f=>f.m);
+        busyUpdate(null,`${L.name} as a background crop of ${C.name}`);await sleep(0);
+        let fit=null;try{fit=fitBackground(getImg(A.id),A,getImg(CA.id),RA,boxes);if(fit)fit={...fit,...await refineBg(getImg(A.id),A,getImg(CA.id),CA,fit,boxes)};}catch(e){console.warn(e);}
+        if(fit&&fit.conf>=.3){const k=Math.max(CA.w/A.w,CA.h/A.h)*Math.max(1,fit.zoom||1),w=A.w*k,h=A.h*k;
+          found.push({L,C,m:{x:(CA.w-w)*fit.ax/CA.w,y:(CA.h-h)*fit.ay/CA.h,w:w/CA.w,h:h/CA.h,rot:0,err:fit.err!=null?fit.err:20}});missed.splice(missed.indexOf(L),1);break;}}
+    }
+    // an image that others were found in is the one to match, so it isn't moved itself (the busiest one wins)
+    for(;;){const kids=new Map();for(const f of found)kids.set(f.C,(kids.get(f.C)||0)+1);
+      const host=[...kids.keys()].filter(C=>found.some(f=>f.L===C)).sort((a,b)=>kids.get(b)-kids.get(a))[0];if(!host)break;
+      found.splice(found.findIndex(f=>f.L===host),1);}
+    for(const f of found){const j=missed.indexOf(f.C);if(j>=0)missed.splice(j,1);}
+  }finally{levelCache.clear();busyEnd();}
+  if(!found.length)return toast(`Couldn’t find ${missed.length===1?missed[0].name:'the selected layers'} in any other image. Put the finished poster (or the image to match) below the layers to align.`,'error');
+  edit(()=>{for(const f of found)placeOnMatch(f.L,f.C,f.m);});
+  const parts=found.map(f=>`${f.L.name} → ${f.C.name} (${pixelText(f.m.err)})`);
+  toast(`Aligned ${parts.join(', ')}${missed.length?`. No match for ${missed.map(L=>L.name).join(', ')}`:''}`,'ok');
+}
+// m: where L appears in C's image (fractions of C's image, plus extra turn). Sets L to that spot in each layout.
+function placeOnMatch(L,C,m){
+  if(isBg(L))L.category='other';
+  const A=assetOf(L),CA=assetOf(C),linked=L.linked!==false;
+  const target=rk=>{const {W,H}=repDims(rk),cb=E.box(C,CA,E.effective(P,C,rk),W,H),r=(cb.rot||0)*Math.PI/180;
+    const lx=(m.x+m.w/2-.5)*cb.w,ly=(m.y+m.h/2-.5)*cb.h,cx=cb.x+cb.w/2+lx*Math.cos(r)-ly*Math.sin(r),cy=cb.y+cb.h/2+lx*Math.sin(r)+ly*Math.cos(r),w=m.w*cb.w,h=m.h*cb.h;
+    return {W,H,b:{x:cx-w/2,y:cy-h/2,w,h,rot:(((cb.rot||0)+(m.rot||0)+180)%360+360)%360-180}};};
+  const plFor=rk=>{const t=target(rk);return E.fromBox(L,A,t.b,t.W,t.H,E.effective(P,L,rk));};
+  const o=P.layouts.overrides;
+  if(!linked){const rk=P.activeRatio;(o[rk]||(o[rk]={}))[L.id]=plFor(rk);return;}
+  const base=P.baseRatio;P.layouts.shared[L.id]=plFor(base);if(o[base])delete o[base][L.id];
+  for(const r of P.ratios){if(r.key===base)continue;const t=target(r.key),sh=E.box(L,A,P.layouts.shared[L.id],t.W,t.H);
+    const same=Math.abs(sh.x-t.b.x)<.5&&Math.abs(sh.y-t.b.y)<.5&&Math.abs(sh.w-t.b.w)<.5&&Math.abs(sh.h-t.b.h)<.5&&Math.abs((sh.rot||0)-t.b.rot)<.05;
+    if(same){if(o[r.key])delete o[r.key][L.id];}else(o[r.key]||(o[r.key]={}))[L.id]=E.fromBox(L,A,t.b,t.W,t.H,P.layouts.shared[L.id]);}
+}
+async function alignToReference_old(){
   const Ls=[...sel].map(layerBy).filter(L=>L&&!isRef(L)&&L.visible&&!L.locked);
   if(!Ls.length)return toast('Select a logo, asset or background to align');
   const refs=P.layers.filter(isRef);if(!refs.length)return toast('No reference poster yet. Run Automate to find one among your images','error');
@@ -2750,11 +2815,10 @@ async function startAutomate(opt){
 /* Asked right after imports once the project has both reference posters and assets. */
 function askAutomate(){
   if(P.layers.filter(L=>isImg(L)&&!isStarter(L)).length<2)return;
-  const manual=P.ratios.some(r=>P.layouts.meta[r.key]&&P.layouts.meta[r.key].manual);
-  const only=selectedAssets(),all=P.layers.filter(L=>!isRef(L)).length;
+  const only=new Set(sel);
   modal({title:'Apply Automate?',body:[el('p',{class:'ask',text:'Would you like to apply the automate function?'}),
-    el('p',{text:`Automate aligns ${only.size&&only.size<all?`the ${only.size} selected asset${only.size>1?'s':''}`:'your assets'} to the reference posters and builds every layout. It never changes your images, and one Undo reverses it.`})],
-    actions:[{label:'Not now',onClick:c=>c()},{label:'Apply Automate',kind:'primary',onClick:c=>{c();startAutomate({classify:true,preserve:manual,only});}}]});
+    el('p',{text:`Automate lines ${only.size?`the ${only.size} imported image${only.size>1?'s':''}`:'your images'} up with any matching image below ${only.size===1?'it':'them'} in the Layers panel, such as a finished poster, in every aspect ratio.`})],
+    actions:[{label:'Not now',onClick:c=>c()},{label:'Apply Automate',kind:'primary',onClick:c=>{c();alignToSimilar(only);}}]});
 }
 /* =====================================================================
    10. SAVE / OPEN / EXPORT
@@ -3652,9 +3716,9 @@ document.addEventListener('keydown',e=>{
   if(mod&&k==='z'){e.preventDefault();e.shiftKey?redo():undo();return;}
   if(mod&&k==='y'){e.preventDefault();redo();return;}
   if(mod&&k==='d'){e.preventDefault();duplicateSelected();return;}
-  if(mod&&e.shiftKey&&k==='l'){e.preventDefault();alignToReference();return;}
+  if(mod&&e.shiftKey&&k==='l'){e.preventDefault();alignToSimilar(sel);return;}
   if(mod&&k==='c'){if(sel.size){e.preventDefault();copySelected();}return;}
-  if(mod&&e.shiftKey&&k==='a'){e.preventDefault();automateDialog();return;}
+  if(mod&&e.shiftKey&&k==='a'){e.preventDefault();alignToSimilar(sel);return;}
   if(mod&&k==='a'){e.preventDefault();sel=new Set(P.layers.filter(L=>!isRef(L)).map(L=>L.id));refreshSelection();return;}
   if(e.key==='Delete'||e.key==='Backspace'){if(sel.size){e.preventDefault();deleteSelected();}return;}
   if(e.key==="'"){toggleGrid();return;}
