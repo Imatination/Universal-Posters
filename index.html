@@ -2935,11 +2935,11 @@ function serialize(mode){
   for(const id of used){const a=P.assets[id];if(!a)continue;
     const ref=P.layers.filter(L=>L.assetId===id).every(isRef);
     const rec={id:a.id,name:a.name,w:a.w,h:a.h,kind:ref?'reference':'asset',stats:a.stats};
-    if(mode==='embed')rec.data=a.data;else{rec.file=(ref?'references/':'assets/')+slug(a.name)+'-'+a.id.slice(-6)+'.png';files.push({name:rec.file,data:dataURLtoBytes(a.data)});}
+    if(mode==='embed')rec.data=a.data;else{rec.file='assets/'+slug(a.name)+'-'+a.id.slice(-6)+'.png';files.push({name:rec.file,data:dataURLtoBytes(a.data)});}
     assets[id]=rec;}
   const obj={format:'universal-posters',version:2,app:'Universal Posters 1.0',savedAt:new Date().toISOString(),meta:{...P.meta},settings:{...P.settings},
     ratios:P.ratios,baseRatio:P.baseRatio,activeRatio:P.activeRatio,layers:P.layers,layouts:P.layouts,
-    exportSettings:{longEdge:P.settings.exportLong,includeReferences:P.settings.exportIncludeRefs,includeGrid:P.settings.exportGrid},assets};
+    exportSettings:{longEdge:P.settings.exportLong,includeGrid:P.settings.exportGrid},assets};
   return {obj:JSON.parse(JSON.stringify(obj)),files};
 }
 const APP_ICON=(document.querySelector('link[rel="icon"][sizes="180x180"]')||{}).href||'';
@@ -3076,8 +3076,7 @@ Saved ${new Date().toLocaleString()}
 
 ${saved}   The saved project (the same file File > Save makes), with every image inside it. Open it with File > Open in Universal Posters to keep editing, or in any browser for a responsive preview and PNG/ZIP exports.
 project.json   Layers, categories, opacity, layouts, shared positions, per-layout overrides and export settings.
-assets/        Poster images as PNG (originals, never modified).
-references/    Reference posters as PNG.
+assets/        Every image in the poster as PNG (originals, never modified).
 
 Layouts: ${P.ratios.map(r=>`${r.name} ${r.w}:${r.h}${r.key===P.baseRatio?' (base)':''}${ovCount(r.key)?` – ${ovCount(r.key)} custom positions`:''}`).join('; ')}
 `;
@@ -3088,29 +3087,29 @@ Layouts: ${P.ratios.map(r=>`${r.name} ${r.w}:${r.h}${r.key===P.baseRatio?' (base
 function exportDialog(){
   const rk=P.activeRatio,r=ratioBy(rk),d=exportDims(rk),A=r.w/r.h;
   const wi=el('input',{type:'number',min:1,value:d.w}),hi=el('input',{type:'number',min:1,value:d.h}),keep=el('input',{type:'checkbox',checked:true});
-  const refs=el('input',{type:'checkbox',checked:P.settings.exportIncludeRefs}),grid=el('input',{type:'checkbox',checked:P.settings.exportGrid});
-  const refs2=el('input',{type:'checkbox',checked:P.settings.exportIncludeRefs}),grid2=el('input',{type:'checkbox',checked:P.settings.exportGrid});
+  const grid=el('input',{type:'checkbox',checked:P.settings.exportGrid});
+  const grid2=el('input',{type:'checkbox',checked:P.settings.exportGrid});
   const long=el('input',{type:'number',min:16,value:P.settings.exportLong});
   wi.addEventListener('input',()=>{if(keep.checked&&+wi.value>0)hi.value=Math.max(1,Math.round(+wi.value/A));});
   hi.addEventListener('input',()=>{if(keep.checked&&+hi.value>0)wi.value=Math.max(1,Math.round(+hi.value*A));});
   keep.addEventListener('change',()=>{if(keep.checked&&+wi.value>0)hi.value=Math.max(1,Math.round(+wi.value/A));});
   [wi,hi,long].forEach(i=>i.addEventListener('keydown',e=>e.stopPropagation()));
   const busy=async(btn,fn)=>{btn.disabled=true;const t=btn.textContent;btn.textContent='Working…';try{await fn();}catch(e){console.error(e);toast(e.message,'error');}finally{btn.disabled=false;btn.textContent=t;}};
-  const save=()=>{P.settings.exportIncludeRefs=refs2.checked;P.settings.exportGrid=grid2.checked;P.settings.exportLong=Math.max(16,+long.value||2400);};
+  const save=()=>{P.settings.exportGrid=grid2.checked;P.settings.exportLong=Math.max(16,+long.value||2400);};
   const b1=el('button',{class:'btn primary'},'Export package (.zip)'),b2=el('button',{class:'btn primary'},'Export PNG'),b3=el('button',{class:'btn'},'Export all as PNGs'),b4=el('button',{class:'btn primary'},'Export all as ZIP');
   b1.onclick=()=>busy(b1,exportPackage);
   b2.onclick=()=>busy(b2,async()=>{const w=+wi.value,h=+hi.value;const target=await chooseSaveTarget(posterFileBase(P.meta.name,r.name),'.png',{title:'Export PNG',ok:'Export',desc:'PNG image',mime:'image/png'});if(!target)return;
-    busyStart('Exporting PNG…',`${r.name} · ${Math.round(w)}×${Math.round(h)} px`);let blob;try{blob=await renderPNG(rk,w,h,{refs:refs.checked,grid:grid.checked});}finally{busyEnd();}
+    busyStart('Exporting PNG…',`${r.name} · ${Math.round(w)}×${Math.round(h)} px`);let blob;try{blob=await renderPNG(rk,w,h,{grid:grid.checked});}finally{busyEnd();}
     if(await target.write(blob)==='saved')toast(`Exported ${target.name}`,'ok');});
-  b3.onclick=()=>busy(b3,()=>{save();return exportAllPNG(false,{long:P.settings.exportLong,refs:refs2.checked,grid:grid2.checked});});
-  b4.onclick=()=>busy(b4,()=>{save();return exportAllPNG(true,{long:P.settings.exportLong,refs:refs2.checked,grid:grid2.checked});});
+  b3.onclick=()=>busy(b3,()=>{save();return exportAllPNG(false,{long:P.settings.exportLong,grid:grid2.checked});});
+  b4.onclick=()=>busy(b4,()=>{save();return exportAllPNG(true,{long:P.settings.exportLong,grid:grid2.checked});});
   modal({title:'Export',wide:true,body:[
-    el('div',{class:'exsec'},el('h4',{text:'Project package'}),el('p',{text:'A self-contained ZIP: the HTML project document, every asset and reference as PNG, and all layer, layout, shared-position and override data. Reopen it with File › Open to keep editing.'}),el('div',{},b1)),
+    el('div',{class:'exsec'},el('h4',{text:'Project package'}),el('p',{text:'A self-contained ZIP: the saved project (.poster.html), every image as PNG, and all layer, layout, shared-position and override data. Reopen it with File › Open to keep editing.'}),el('div',{},b1)),
     el('div',{class:'exsec'},el('h4',{text:`PNG of ${r.name} (${r.w}:${r.h})`}),
       el('div',{class:'exrow'},el('label',{class:'field'},el('span',{text:'Width (px)'}),wi),el('label',{class:'field'},el('span',{text:'Height (px)'}),hi),el('label',{class:'chk'},keep,'Keep aspect ratio')),
-      el('div',{class:'exrow'},el('label',{class:'chk'},refs,'Include reference images'),el('label',{class:'chk'},grid,'Include composition grid')),el('div',{},b2)),
+      el('div',{class:'exrow'},el('label',{class:'chk'},grid,'Include composition grid')),el('div',{},b2)),
     el('div',{class:'exsec'},el('h4',{text:`All ${P.ratios.length} layouts`}),el('p',{text:'Each layout is named after its preset and ratio. Custom layouts use their own pixel size; presets use the long edge below.'}),
-      el('div',{class:'exrow'},el('label',{class:'field'},el('span',{text:'Long edge (px)'}),long),el('label',{class:'chk'},refs2,'Include references'),el('label',{class:'chk'},grid2,'Include grid')),
+      el('div',{class:'exrow'},el('label',{class:'field'},el('span',{text:'Long edge (px)'}),long),el('label',{class:'chk'},grid2,'Include grid')),
       el('div',{class:'exrow'},b3,b4))],
     actions:[{label:'Close',onClick:c=>c()}]});
 }
