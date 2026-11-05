@@ -1132,6 +1132,7 @@ cv.addEventListener('pointermove',e=>{
       if(!centre){ccx=-sxg*b0.w/2+sxg*w/2;ccy=-syg*b0.h/2+syg*h/2;}
       const ncx=c[0]+ccx*cs-ccy*sn,ncy=c[1]+ccx*sn+ccy*cs;
       nb.w=w;nb.h=h;nb.x=ncx-w/2;nb.y=ncy-h/2;
+      if(drag.ids.length===1&&UI.snap!==false&&Math.abs(b0.rot||0)<.01)snapScale(nb,b0,sxg,syg,centre,prop,W,H,min);
     }else if(drag.type==='rotate'){
       const c=[b0.x+b0.w/2,b0.y+b0.h/2];
       let a=(Math.atan2(p.y-c[1],p.x-c[0])-Math.atan2(drag.start.y-c[1],drag.start.x-c[0]))*180/Math.PI+(b0.rot||0);
@@ -1154,6 +1155,30 @@ function snapAxis(pos,size,S,axis,stick){
   for(const t of centres){const d=t-(pos+size/2);if(Math.abs(d)<SNAP_IN&&(!best||Math.abs(d)<Math.abs(best.d)))best={d,t,edge:'c'};}
   for(const t of edges){for(const [v,edge] of [[pos,'l'],[pos+size,'r']]){const d=t-v;if(Math.abs(d)<SNAP_IN&&(!best||Math.abs(d)<Math.abs(best.d)))best={d,t,edge};}}
   return best;
+}
+/* Sticky guides while scaling (unrotated assets): the edges being dragged snap to the canvas edges, centre and
+   thirds lines, and stay stuck a little once snapped. Proportional scaling snaps whichever side is closest. */
+function snapScale(nb,b0,sxg,syg,centre,prop,W,H,min){
+  const st=drag.sstick||{};
+  const ax=sxg>0?b0.x:b0.x+b0.w,ay=syg>0?b0.y:b0.y+b0.h,cx=b0.x+b0.w/2,cy=b0.y+b0.h/2;
+  const find=(edge,S,stick)=>{const lines=[0,S/3,S/2,2*S/3,S];
+    if(stick!=null&&Math.abs(stick-edge)<SNAP_OUT)return stick;
+    let best=null;for(const t of lines){const d=Math.abs(t-edge);if(d<SNAP_IN&&(best==null||d<Math.abs(best-edge)))best=t;}return best;};
+  const ex=sxg>0?nb.x+nb.w:nb.x,ey=syg>0?nb.y+nb.h:nb.y;
+  const tx=find(ex,W,st.x),ty=find(ey,H,st.y);
+  const wFor=t=>centre?2*(t-cx)*sxg:(t-ax)*sxg,hFor=t=>centre?2*(t-cy)*syg:(t-ay)*syg;
+  let w=nb.w,h=nb.h,gx=null,gy=null;
+  const okx=tx!=null&&wFor(tx)>=min,oky=ty!=null&&hFor(ty)>=min;
+  if(prop){
+    const dx=okx?Math.abs(tx-ex):Infinity,dy=oky?Math.abs(ty-ey):Infinity;
+    if(dx<=dy&&okx){const k=wFor(tx)/b0.w;w=b0.w*k;h=b0.h*k;gx=tx;}
+    else if(oky){const k=hFor(ty)/b0.h;w=b0.w*k;h=b0.h*k;gy=ty;}
+  }else{if(okx){w=wFor(tx);gx=tx;}if(oky){h=hFor(ty);gy=ty;}}
+  if(gx==null&&gy==null){drag.sstick={};return;}
+  nb.w=w;nb.h=h;
+  nb.x=centre?cx-w/2:(sxg>0?ax:ax-w);nb.y=centre?cy-h/2:(syg>0?ay:ay-h);
+  if(gx!=null)guides.push([gx,0,gx,H]);if(gy!=null)guides.push([0,gy,W,gy]);
+  drag.sstick={x:gx,y:gy};
 }
 function snapBox(nb,W,H){
   const st=drag&&drag.stick||{};
@@ -1394,7 +1419,7 @@ async function addTextLayer(content){
   const L={id:uid('lay'),assetId,name:t.content.split('\n')[0].slice(0,40),nameAuto:true,type:'text',text:t,textMode:mode,showIn:{},category:'other',catAuto:false,visible:true,opacity:1};
   edit(()=>{insertLayer(L);P.layouts.shared[L.id]={ax:.5,ay:.5,s:.5,rot:0,zoom:1,show:true};sel=new Set([L.id]);},{animate:false});animateFrom(d);
   const thin=P.ratios.filter(r=>E.textAuto(r.w,r.h)).map(r=>r.name);
-  toast(mode==='all'||!E.hasLogo(P)?`Text added. It shows in every layout${mode==='all'?'':' until a logo is added'}; change that under Show in.`:`Text added. It shows automatically in ${thin.join(', ')||'thin layouts'}; switch it on for other layouts under Show in.`,'ok');
+  toast(mode==='all'||!E.hasLogo(P)?`Text added. It shows in every layout${mode==='all'?'':' until a logo is added'}.`:`Text added. It shows automatically in ${thin.join(', ')||'thin layouts'}.`,'ok');
   if(UI.dockCollapsed||UI.pane!=='props')setUI({pane:'props',dockCollapsed:false,propsCollapsed:false});
   if(E.textShown(L,P.activeRatio,aspectOf(P.activeRatio),1,P))setTimeout(()=>startTextEdit(L,!content),anim?480:30);
 }
@@ -1426,18 +1451,6 @@ function textProps(L,body){
     el('div',{class:'toggles'},sw('Stroke','stroke')));
   if(t.stroke){const w=numField('pf-sw','W',fmt(t.strokeWidth,1),'%',v=>updateText(L,{strokeWidth:clamp(v,0,40)}),.5);
     body.append(el('div',{class:'prow'},el('span',{class:'k',text:'Stroke width'}),w),el('div',{class:'prow'},el('span',{class:'k',text:'Stroke colour'}),el('div',{class:'colorrow'},col('strokeColor','Stroke colour'))));}
-  // where the text shows
-  const list=el('div',{class:'showin'});
-  const mode=el('select',{'aria-label':'Automatically show in'},el('option',{value:'thin',text:'Thin layouts only (banners, strips)'}),el('option',{value:'all',text:'All layouts'}));
-  mode.value=L.textMode==='all'?'all':'thin';mode.addEventListener('change',()=>edit(()=>{L.textMode=mode.value;}));
-  body.append(el('div',{class:'prow'},el('span',{class:'k',text:'Automatic'}),mode));
-  const noLogo=!E.hasLogo(P);
-  for(const r of P.ratios){const auto=L.textMode==='all'||noLogo||E.textAuto(r.w,r.h),o=L.showIn&&L.showIn[r.key],on=o!=null?!!o:auto;
-    const i=el('input',{type:'checkbox',checked:on,'aria-label':`Show in ${r.name}`});i.addEventListener('change',()=>setTextShown(L,r.key,i.checked));
-    list.append(el('label',{class:'chk'},i,`${r.name}`,el('em',{text:o!=null?(on===auto?' (same as automatic)':' (set by you)'):(auto?' (automatic)':'')})));}
-  body.append(el('div',{class:'field'},el('span',{text:'Show in'}),list),
-    el('p',{class:'hint',text:L.textMode==='all'?'Shown in every layout unless you switch a layout off above.':noLogo?'There is no logo yet, so the text shows in every layout. Once a layer is set as the logo, it shows automatically only in thin layouts, like the banners and strips.':'Automatically shown only in thin layouts, like the banners and strips, where a logo has too little room.'}));
-  if(L.showIn&&Object.keys(L.showIn).length)body.append(el('button',{class:'btn small',onclick:()=>edit(()=>{L.showIn={};}),text:'Back to automatic'}));
 }
 
 /* ---------------- Clipboard ----------------
