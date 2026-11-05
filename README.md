@@ -39,6 +39,7 @@ Open `index.html` in a browser. Everything works offline except the optional tex
 | `apple-touch-icon.png` | iPhone and iPad home-screen icon |
 | `favicon-32.png` | Small browser-tab icon |
 | `icon-original.jpg` | The original icon artwork |
+| `og-image.png` | Large preview image shown when the link is shared (iMessage, social apps) |
 | `manifest.webmanifest` | Lets phones install the app with its name and icon |
 | `.nojekyll` | Tells GitHub Pages to serve the files as they are |
 
